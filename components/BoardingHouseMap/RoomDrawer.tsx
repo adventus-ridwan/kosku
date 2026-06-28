@@ -65,13 +65,14 @@ export function RoomDrawer({
   const effectiveRole = usageMode === 'public' ? null : role;
   const canDelete = canDeleteRoom(effectiveRole);
   const isOpen = room !== null;
-  const { tenant, contract, finishContract } = useTenant(room?.id ?? null);
+  const { tenant, contract } = useTenant(room?.id ?? null);
 
   // localRoom persists during the close animation so the drawer doesn't
   // flash empty while it's sliding out.
   const [activeTab, setActiveTab] = useState<'information' | 'tenant' | 'history'>('information');
   const [localRoom, setLocalRoom] = useState<Room | null>(room);
   const [nameError, setNameError] = useState('');
+  const [statusError, setStatusError] = useState('');
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   // Sync local state when a new room is selected (during-render update).
@@ -81,6 +82,7 @@ export function RoomDrawer({
     if (room !== null) {
       setLocalRoom(room);
       setNameError('');
+      setStatusError('');
       setConfirmDelete(false);
       setActiveTab('information');
     }
@@ -136,10 +138,9 @@ export function RoomDrawer({
       setNameError('Nomor kamar sudah digunakan di lantai ini');
       return;
     }
-    // Occupied → Maintenance: auto-finish the active contract with today as the actual end date.
-    if (room?.status === 'occupied' && localRoom.status === 'maintenance' && contract) {
-      const today = new Date().toISOString().split('T')[0];
-      finishContract(contract.id, () => {}, today);
+    if (contract && localRoom.status !== 'occupied') {
+      setStatusError('Status kamar tidak dapat diubah karena masih ada kontrak aktif.');
+      return;
     }
 
     onSave(floorId, { ...localRoom, name: trimmed, price: Math.max(0, localRoom.price) });
@@ -345,13 +346,9 @@ export function RoomDrawer({
                       <span className="text-sm font-medium text-blue-800">{STATUS_LABEL.occupied}</span>
                       <span className="ml-auto text-xs text-blue-500">Diatur oleh kontrak aktif</span>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => update('status', 'maintenance')}
-                      className="w-full py-1.5 text-xs font-medium rounded-lg border border-gray-200 text-gray-600 hover:bg-amber-50 hover:border-amber-200 hover:text-amber-700 transition-colors"
-                    >
-                      Pindah ke Perbaikan
-                    </button>
+                    <p className="text-xs text-gray-400">
+                      Selesaikan kontrak terlebih dahulu melalui tab Tenant untuk mengubah status kamar.
+                    </p>
                   </div>
                 ) : (
                   <div className="flex rounded-lg border border-gray-200 overflow-hidden">
@@ -359,7 +356,7 @@ export function RoomDrawer({
                       <button
                         key={s}
                         type="button"
-                        onClick={() => update('status', s)}
+                        onClick={() => { update('status', s); setStatusError(''); }}
                         className={[
                           'flex-1 py-1.5 text-xs font-medium transition-colors',
                           i > 0 ? 'border-l border-gray-200' : '',
@@ -372,6 +369,9 @@ export function RoomDrawer({
                       </button>
                     ))}
                   </div>
+                )}
+                {statusError && (
+                  <p className="text-xs text-red-500 mt-1">{statusError}</p>
                 )}
               </div>
 
