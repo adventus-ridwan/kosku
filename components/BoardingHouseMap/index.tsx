@@ -16,7 +16,11 @@ export default function BoardingHouseMap() {
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
-      <Toolbar houseName={boardingHouse.name} />
+      <Toolbar
+          houseName={boardingHouse.name}
+          mode={state.mode}
+          onModeChange={actions.setMode}
+        />
       <div className="flex-1 overflow-auto px-6 py-5">
         <FloorTab
           floors={boardingHouse.floors}
