@@ -67,3 +67,7 @@ export function canViewTenantInfo(role: UserRole | null): boolean {
 export function canViewContractHistory(role: UserRole | null): boolean {
   return role === 'penjaga' || role === 'owner';
 }
+
+export function canAccessWorkspace(role: UserRole | null): boolean {
+  return role === 'owner';
+}
