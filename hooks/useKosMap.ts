@@ -1,6 +1,6 @@
 'use client';
 
-import { useReducer, useEffect } from 'react';
+import { useReducer, useEffect, useRef } from 'react';
 import type {
   AppState,
   AppMode,
@@ -303,21 +303,24 @@ function reducer(state: AppState, action: KosAction): AppState {
 // ---------------------------------------------------------------------------
 
 export function useKosMap() {
-  // Load from storage synchronously in the reducer initializer so the first
-  // render already has the persisted data — no hydration effect needed.
-  const [state, dispatch] = useReducer(reducer, undefined, (): AppState => {
-    const saved = loadFromStorage();
-    if (saved) {
-      return {
-        ...initialState,
-        boardingHouse: saved,
-        activeFloorId: saved.floors[0]?.id ?? initialState.activeFloorId,
-      };
-    }
-    return initialState;
-  });
+  const [state, dispatch] = useReducer(reducer, initialState);
+
+  // isMounted gates the save effect so the first render with defaultBoardingHouse
+  // never overwrites persisted data before the hydration effect fires.
+  const isMounted = useRef(false);
 
   useEffect(() => {
+    const saved = loadFromStorage();
+    if (saved) {
+      dispatch({ type: 'HYDRATE', payload: saved });
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!isMounted.current) {
+      isMounted.current = true;
+      return;
+    }
     saveToStorage(state.boardingHouse);
   }, [state.boardingHouse]);
 
