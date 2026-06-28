@@ -28,7 +28,7 @@ export function AddFacilityOverlay({
   const [name, setName] = useState(FACILITY_TYPE_CONFIG['bathroom'].label);
   const [widthStr, setWidthStr] = useState('1');
   const [heightStr, setHeightStr] = useState('1');
-  const [notes, setNotes] = useState('');
+  const notes = '';
   const [nameError, setNameError] = useState('');
   const [sizeError, setSizeError] = useState('');
 

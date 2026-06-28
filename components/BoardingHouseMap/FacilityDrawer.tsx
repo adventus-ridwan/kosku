@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useLayoutEffect } from 'react';
 import type { Facility, FacilityType, AppMode } from '@/types';
 import { FACILITY_TYPE_CONFIG, FACILITY_TYPE_OPTIONS } from '@/lib/facilityConfig';
 import { useAuth } from '@/features/auth/useAuth';
@@ -33,15 +33,10 @@ export function FacilityDrawer({
   const [nameError, setNameError] = useState('');
   const [confirmDelete, setConfirmDelete] = useState(false);
 
-  const onCloseRef = useRef(onClose);
-  onCloseRef.current = onClose;
-
-  const modeRef = useRef(mode);
-  modeRef.current = mode;
-
-  const handleSaveRef = useRef<() => void>(() => undefined);
-
-  useEffect(() => {
+  // Sync local state when a different facility is selected (during-render update).
+  const [prevFacility, setPrevFacility] = useState<Facility | null>(facility);
+  if (facility !== prevFacility) {
+    setPrevFacility(facility);
     if (facility !== null) {
       setLocalFacility(facility);
       setWidthStr(String(facility.width));
@@ -49,7 +44,11 @@ export function FacilityDrawer({
       setNameError('');
       setConfirmDelete(false);
     }
-  }, [facility]);
+  }
+
+  const onCloseRef = useRef(onClose);
+  const modeRef = useRef(mode);
+  const handleSaveRef = useRef<() => void>(() => undefined);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -106,7 +105,13 @@ export function FacilityDrawer({
     });
     onClose();
   }
-  handleSaveRef.current = handleSave;
+
+  // Keep refs pointing at the latest callbacks without re-running the keyboard effect.
+  useLayoutEffect(() => {
+    onCloseRef.current = onClose;
+    modeRef.current = mode;
+    handleSaveRef.current = handleSave;
+  });
 
   function handleDelete() {
     if (!canDelete) return;

@@ -1,24 +1,36 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 
 export function useLocalStorage<T>(
   key: string,
   initialValue: T,
 ): [T, (value: T | ((prev: T) => T)) => void] {
-  const [stored, setStored] = useState<T>(initialValue);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
+  const [stored, setStored] = useState<T>(() => {
+    if (typeof window === 'undefined') return initialValue;
     try {
       const raw = localStorage.getItem(key);
-      if (raw !== null) {
-        setStored(JSON.parse(raw) as T);
-      }
+      return raw !== null ? (JSON.parse(raw) as T) : initialValue;
     } catch {
-      // Malformed JSON — keep initialValue
+      return initialValue;
     }
-  }, [key]);
+  });
+
+  // Re-read from storage when the key changes (during-render update avoids cascading effect).
+  const [prevKey, setPrevKey] = useState(key);
+  if (key !== prevKey) {
+    setPrevKey(key);
+    let next = initialValue;
+    if (typeof window !== 'undefined') {
+      try {
+        const raw = localStorage.getItem(key);
+        if (raw !== null) next = JSON.parse(raw) as T;
+      } catch {
+        // Malformed JSON — keep initialValue
+      }
+    }
+    setStored(next);
+  }
 
   function setValue(value: T | ((prev: T) => T)) {
     setStored(prev => {

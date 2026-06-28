@@ -1,22 +1,17 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useState } from 'react';
 import type { UserRole, AuthContextValue } from './types';
 import { loadRoleFromStorage, saveRoleToStorage, clearRoleFromStorage } from './authStorage';
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [role, setRoleState] = useState<UserRole | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [role, setRoleState] = useState<UserRole | null>(() => loadRoleFromStorage());
+  // Role is loaded synchronously in the state initializer, so loading is never deferred.
+  const isLoading = false;
 
-  useEffect(() => {
-    const stored = loadRoleFromStorage();
-    if (stored) setRoleState(stored);
-    setIsLoading(false);
-  }, []);
-
-  const isAuthenticated = !isLoading && (role === 'penjaga' || role === 'owner');
+  const isAuthenticated = role === 'penjaga' || role === 'owner';
 
   function login(newRole: UserRole) {
     setRoleState(newRole);

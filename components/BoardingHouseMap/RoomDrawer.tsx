@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useLayoutEffect } from 'react';
 import type { Room, RoomStatus, AppMode } from '@/types';
 import { useAuth } from '@/features/auth/useAuth';
 import { useUsageMode } from '@/context/UsageModeContext';
@@ -74,25 +74,23 @@ export function RoomDrawer({
   const [nameError, setNameError] = useState('');
   const [confirmDelete, setConfirmDelete] = useState(false);
 
-  // Stable refs so keyboard effects don't re-register on every render.
-  const onCloseRef = useRef(onClose);
-  onCloseRef.current = onClose;
-
-  const modeRef = useRef(mode);
-  modeRef.current = mode;
-
-  // Assigned after handleSave is defined below.
-  const handleSaveRef = useRef<() => void>(() => undefined);
-
-  // Sync local state when a new room is selected
-  useEffect(() => {
+  // Sync local state when a new room is selected (during-render update).
+  const [prevRoom, setPrevRoom] = useState<Room | null>(room);
+  if (room !== prevRoom) {
+    setPrevRoom(room);
     if (room !== null) {
       setLocalRoom(room);
       setNameError('');
       setConfirmDelete(false);
       setActiveTab('information');
     }
-  }, [room]);
+  }
+
+  // Stable refs so keyboard effects don't re-register on every render.
+  const onCloseRef = useRef(onClose);
+  const modeRef = useRef(mode);
+  // Assigned after handleSave is defined below.
+  const handleSaveRef = useRef<() => void>(() => undefined);
 
   // Escape → close; Ctrl/Cmd+S → save when editing.
   useEffect(() => {
@@ -147,7 +145,13 @@ export function RoomDrawer({
     onSave(floorId, { ...localRoom, name: trimmed, price: Math.max(0, localRoom.price) });
     onClose();
   }
-  handleSaveRef.current = handleSave;
+
+  // Keep refs pointing at the latest callbacks without re-running the keyboard effect.
+  useLayoutEffect(() => {
+    onCloseRef.current = onClose;
+    modeRef.current = mode;
+    handleSaveRef.current = handleSave;
+  });
 
   function handleDelete() {
     if (!canDelete) return;

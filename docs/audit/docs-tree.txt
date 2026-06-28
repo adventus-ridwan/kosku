@@ -1,0 +1,14 @@
+docs
+docs/ARCHITECTURE.md
+docs/BACKLOG.md
+docs/CHANGELOG.md
+docs/DATA_MODEL.md
+docs/PERMISSION_MATRIX.md
+docs/PRODUCT_VISION.md
+docs/PROJECT_RULES.md
+docs/RELEASE_PLAN.md
+docs/ROADMAP.md
+docs/VISION.md
+docs/audit
+docs/audit/docs-tree.txt
+docs/audit/project-tree.txt

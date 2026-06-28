@@ -1,13 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useMemo } from 'react';
 import type { ContractStatus } from '@/features/tenants/types';
 import {
   buildHistoryEntries,
   buildHistorySummary,
   formatDuration,
-  type HistoryEntry,
-  type HistorySummary,
 } from './historyUtils';
 
 // ─── Config ───────────────────────────────────────────────────────────────────
@@ -58,18 +56,8 @@ interface HistoryTabProps {
 }
 
 export function HistoryTab({ roomId }: HistoryTabProps) {
-  const [entries, setEntries] = useState<HistoryEntry[]>([]);
-  const [summary, setSummary] = useState<HistorySummary>({
-    totalContracts: 0,
-    lifetimeRevenue: 0,
-    averageStayDays: 0,
-  });
-
-  useEffect(() => {
-    const loaded = buildHistoryEntries(roomId);
-    setEntries(loaded);
-    setSummary(buildHistorySummary(loaded));
-  }, [roomId]);
+  const entries = useMemo(() => buildHistoryEntries(roomId), [roomId]);
+  const summary = useMemo(() => buildHistorySummary(entries), [entries]);
 
   if (entries.length === 0) {
     return (

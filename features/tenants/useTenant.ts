@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import type { Tenant, Contract } from './types';
 import { addTenant, getTenantById } from './tenantStorage';
 import { addContract, getActiveContractByRoomId, finishContract as finishContractInStorage } from './contractStorage';
@@ -15,10 +15,11 @@ type ContractInput = Omit<Contract, 'id' | 'roomId' | 'tenantId' | 'createdAt' |
 type TenantInput = Omit<Tenant, 'id'>;
 
 export function useTenant(roomId: string | null) {
-  const [state, setState] = useState<TenantState>({
-    tenant: null,
-    contract: null,
-    isLoading: true,
+  const [state, setState] = useState<TenantState>(() => {
+    if (!roomId) return { tenant: null, contract: null, isLoading: false };
+    const contract = getActiveContractByRoomId(roomId);
+    const tenant = contract ? getTenantById(contract.tenantId) : null;
+    return { tenant, contract, isLoading: false };
   });
 
   const load = useCallback(() => {
@@ -31,9 +32,18 @@ export function useTenant(roomId: string | null) {
     setState({ tenant, contract, isLoading: false });
   }, [roomId]);
 
-  useEffect(() => {
-    load();
-  }, [load]);
+  // Re-read from storage when roomId changes (during-render update).
+  const [prevRoomId, setPrevRoomId] = useState(roomId);
+  if (roomId !== prevRoomId) {
+    setPrevRoomId(roomId);
+    if (!roomId) {
+      setState({ tenant: null, contract: null, isLoading: false });
+    } else {
+      const contract = getActiveContractByRoomId(roomId);
+      const tenant = contract ? getTenantById(contract.tenantId) : null;
+      setState({ tenant, contract, isLoading: false });
+    }
+  }
 
   function createTenantAndContract(
     tenantInput: TenantInput,

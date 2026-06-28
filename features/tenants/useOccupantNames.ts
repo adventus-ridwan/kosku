@@ -1,18 +1,16 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useMemo } from 'react';
 import type { Room } from '@/types';
 import { loadContracts } from './contractStorage';
 import { loadTenants } from './tenantStorage';
 
 export function useOccupantNames(rooms: Pick<Room, 'id' | 'status'>[]): Record<string, string> {
-  // Key encodes both IDs and statuses so the effect re-runs whenever a room
+  // Key encodes both IDs and statuses so the memo recomputes whenever a room
   // becomes occupied or available (i.e. after a contract is created or finished).
   const key = rooms.map(r => `${r.id}:${r.status}`).join(',');
 
-  const [names, setNames] = useState<Record<string, string>>({});
-
-  useEffect(() => {
+  return useMemo(() => {
     const roomIds = new Set(rooms.map(r => r.id));
     const contracts = loadContracts().filter(
       c => c.status === 'ACTIVE' && roomIds.has(c.roomId),
@@ -23,10 +21,8 @@ export function useOccupantNames(rooms: Pick<Room, 'id' | 'status'>[]): Record<s
       const name = tenantMap.get(contract.tenantId);
       if (name) result[contract.roomId] = name;
     }
-    setNames(result);
+    return result;
   // key is a stable string derived from rooms — safe to omit the array itself
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key]);
-
-  return names;
 }
