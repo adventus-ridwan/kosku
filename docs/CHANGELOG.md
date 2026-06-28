@@ -19,6 +19,24 @@
 
 - LocalStorage SSR handling.
 
+## Sprint 3C - Contract History
+
+### Added
+
+- `features/history/historyUtils.ts` — pure calculation functions: `calculateDurationDays`, `formatDuration`, `calculateContractRevenue`, `buildHistoryEntries`, `buildHistorySummary`.
+- `features/history/HistoryTab.tsx` — History tab UI: summary cards (total contracts, lifetime revenue, average stay) + contract list sorted newest-first.
+- `canViewContractHistory` permission helper (penjaga + owner).
+- History tab in Room Drawer (gated by `canViewContractHistory`).
+
+### Business Rules
+
+- History is derived directly from Contract storage — no new storage introduced.
+- Summary includes all contracts (ACTIVE, FINISHED, CANCELLED).
+- Revenue formula: `monthlyRent × (durationDays / 30)` per DATA_MODEL.
+- History updates automatically when the user switches to the tab (fresh mount on each tab switch).
+
+---
+
 ## Sprint 3B.1 - Contract Business Rules
 
 ### Added

@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
 import type { Room, RoomStatus, AppMode } from '@/types';
 import { useAuth } from '@/features/auth/useAuth';
-import { canDeleteRoom, canEditRoom, canViewTenantInfo } from '@/features/auth/permission';
+import { canDeleteRoom, canEditRoom, canViewTenantInfo, canViewContractHistory } from '@/features/auth/permission';
 import { TenantTab } from '@/features/tenants/TenantTab';
 import { useTenant } from '@/features/tenants/useTenant';
+import { HistoryTab } from '@/features/history/HistoryTab';
 
 // ─── Status display config ───────────────────────────────────────────────────
 
@@ -65,7 +66,7 @@ export function RoomDrawer({
 
   // localRoom persists during the close animation so the drawer doesn't
   // flash empty while it's sliding out.
-  const [activeTab, setActiveTab] = useState<'information' | 'tenant'>('information');
+  const [activeTab, setActiveTab] = useState<'information' | 'tenant' | 'history'>('information');
   const [localRoom, setLocalRoom] = useState<Room | null>(room);
   const [nameError, setNameError] = useState('');
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -255,6 +256,20 @@ export function RoomDrawer({
                 Tenant
               </button>
             )}
+            {canViewContractHistory(role) && (
+              <button
+                type="button"
+                onClick={() => { setActiveTab('history'); setConfirmDelete(false); }}
+                className={[
+                  'px-5 py-3 text-sm font-medium border-b-2 -mb-px transition-colors',
+                  activeTab === 'history'
+                    ? 'border-gray-900 text-gray-900'
+                    : 'border-transparent text-gray-500 hover:text-gray-700',
+                ].join(' ')}
+              >
+                History
+              </button>
+            )}
           </div>
         )}
 
@@ -394,6 +409,11 @@ export function RoomDrawer({
               onRoomVacant={handleRoomVacant}
             />
           )}
+
+          {/* History tab */}
+          {activeTab === 'history' && localRoom && canViewContractHistory(role) && (
+            <HistoryTab roomId={localRoom.id} />
+          )}
         </div>
 
         {/* ── Footer (sticky) ── */}
@@ -468,6 +488,17 @@ export function RoomDrawer({
 
           {/* Tenant tab — close button */}
           {activeTab === 'tenant' && (
+            <button
+              type="button"
+              onClick={handleClose}
+              className="w-full border border-gray-200 text-gray-700 text-sm font-medium py-2 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              Tutup
+            </button>
+          )}
+
+          {/* History tab — close button */}
+          {activeTab === 'history' && (
             <button
               type="button"
               onClick={handleClose}
