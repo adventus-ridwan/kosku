@@ -7,6 +7,7 @@ import type {
   DragState,
   Room,
   Floor,
+  Facility,
   BoardingHouse,
 } from '@/types';
 import { defaultBoardingHouse } from '@/lib/defaults';
@@ -22,6 +23,8 @@ type KosAction =
   | { type: 'SET_ACTIVE_FLOOR'; payload: string }
   | { type: 'SELECT_ROOM'; payload: string }
   | { type: 'DESELECT_ROOM' }
+  | { type: 'SELECT_FACILITY'; payload: string }
+  | { type: 'DESELECT_FACILITY' }
   | { type: 'UPDATE_HOUSE_NAME'; payload: string }
   | { type: 'ADD_FLOOR'; payload: { id: string; name: string } }
   | { type: 'RENAME_FLOOR'; payload: { id: string; name: string } }
@@ -30,6 +33,9 @@ type KosAction =
   | { type: 'UPDATE_ROOM'; payload: { floorId: string; room: Room } }
   | { type: 'DELETE_ROOM'; payload: { floorId: string; roomId: string } }
   | { type: 'MOVE_ROOM'; payload: { floorId: string; roomId: string; x: number; y: number } }
+  | { type: 'ADD_FACILITY'; payload: { floorId: string; facility: Facility } }
+  | { type: 'UPDATE_FACILITY'; payload: { floorId: string; facility: Facility } }
+  | { type: 'DELETE_FACILITY'; payload: { floorId: string; facilityId: string } }
   | { type: 'SET_DRAG_STATE'; payload: DragState | null };
 
 // ---------------------------------------------------------------------------
@@ -41,6 +47,7 @@ const initialState: AppState = {
   mode: 'view',
   activeFloorId: defaultBoardingHouse.floors[0].id,
   selectedRoomId: null,
+  selectedFacilityId: null,
   dragState: null,
 };
 
@@ -82,13 +89,24 @@ function reducer(state: AppState, action: KosAction): AppState {
       return { ...state, mode: action.payload, dragState: null };
 
     case 'SET_ACTIVE_FLOOR':
-      return { ...state, activeFloorId: action.payload, selectedRoomId: null };
+      return {
+        ...state,
+        activeFloorId: action.payload,
+        selectedRoomId: null,
+        selectedFacilityId: null,
+      };
 
     case 'SELECT_ROOM':
-      return { ...state, selectedRoomId: action.payload };
+      return { ...state, selectedRoomId: action.payload, selectedFacilityId: null };
 
     case 'DESELECT_ROOM':
       return { ...state, selectedRoomId: null };
+
+    case 'SELECT_FACILITY':
+      return { ...state, selectedFacilityId: action.payload, selectedRoomId: null };
+
+    case 'DESELECT_FACILITY':
+      return { ...state, selectedFacilityId: null };
 
     case 'UPDATE_HOUSE_NAME':
       return {
@@ -101,6 +119,7 @@ function reducer(state: AppState, action: KosAction): AppState {
         id: action.payload.id,
         name: action.payload.name,
         rooms: [],
+        facilities: [],
       };
       return {
         ...state,
@@ -125,7 +144,7 @@ function reducer(state: AppState, action: KosAction): AppState {
 
     case 'DELETE_FLOOR': {
       const remaining = state.boardingHouse.floors.filter(f => f.id !== action.payload);
-      if (remaining.length === 0) return state; // always keep at least one floor
+      if (remaining.length === 0) return state;
       const nextActiveId =
         state.activeFloorId === action.payload ? remaining[0].id : state.activeFloorId;
       return {
@@ -133,6 +152,7 @@ function reducer(state: AppState, action: KosAction): AppState {
         boardingHouse: { ...state.boardingHouse, floors: remaining },
         activeFloorId: nextActiveId,
         selectedRoomId: null,
+        selectedFacilityId: null,
       };
     }
 
@@ -192,22 +212,20 @@ function reducer(state: AppState, action: KosAction): AppState {
       const room = floor.rooms.find(r => r.id === roomId);
       if (!room) return state;
 
-      // Bounds check
       if (
-        x < 0 ||
-        y < 0 ||
+        x < 0 || y < 0 ||
         x + room.width > state.boardingHouse.gridCols ||
         y + room.height > state.boardingHouse.gridRows
-      ) {
-        return state;
-      }
+      ) return state;
 
-      // Collision check against every other room on the same floor
-      const hasOverlap = floor.rooms.some(r => {
+      const hasRoomOverlap = floor.rooms.some(r => {
         if (r.id === roomId) return false;
         return cellsOverlap(x, y, room.width, room.height, r.x, r.y, r.width, r.height);
       });
-      if (hasOverlap) return state;
+      const hasFacilityOverlap = floor.facilities.some(fac =>
+        cellsOverlap(x, y, room.width, room.height, fac.x, fac.y, fac.width, fac.height),
+      );
+      if (hasRoomOverlap || hasFacilityOverlap) return state;
 
       return {
         ...state,
@@ -220,6 +238,57 @@ function reducer(state: AppState, action: KosAction): AppState {
         },
       };
     }
+
+    case 'ADD_FACILITY':
+      return {
+        ...state,
+        boardingHouse: {
+          ...state.boardingHouse,
+          floors: updateFloors(
+            state.boardingHouse.floors,
+            action.payload.floorId,
+            f => ({ ...f, facilities: [...f.facilities, action.payload.facility] }),
+          ),
+        },
+      };
+
+    case 'UPDATE_FACILITY':
+      return {
+        ...state,
+        boardingHouse: {
+          ...state.boardingHouse,
+          floors: updateFloors(
+            state.boardingHouse.floors,
+            action.payload.floorId,
+            f => ({
+              ...f,
+              facilities: f.facilities.map(fac =>
+                fac.id === action.payload.facility.id ? action.payload.facility : fac,
+              ),
+            }),
+          ),
+        },
+      };
+
+    case 'DELETE_FACILITY':
+      return {
+        ...state,
+        boardingHouse: {
+          ...state.boardingHouse,
+          floors: updateFloors(
+            state.boardingHouse.floors,
+            action.payload.floorId,
+            f => ({
+              ...f,
+              facilities: f.facilities.filter(fac => fac.id !== action.payload.facilityId),
+            }),
+          ),
+        },
+        selectedFacilityId:
+          state.selectedFacilityId === action.payload.facilityId
+            ? null
+            : state.selectedFacilityId,
+      };
 
     case 'SET_DRAG_STATE':
       return { ...state, dragState: action.payload };
@@ -240,7 +309,6 @@ export function useKosMap() {
   // defaultBoardingHouse never overwrites stored data before it is loaded.
   const [isHydrated, setIsHydrated] = useState(false);
 
-  // Load from localStorage once on mount
   useEffect(() => {
     const saved = loadFromStorage();
     if (saved) {
@@ -249,7 +317,6 @@ export function useKosMap() {
     setIsHydrated(true);
   }, []);
 
-  // Persist whenever boardingHouse changes, but only after hydration
   useEffect(() => {
     if (!isHydrated) return;
     saveToStorage(state.boardingHouse);
@@ -271,6 +338,12 @@ export function useKosMap() {
 
     deselectRoom: () =>
       dispatch({ type: 'DESELECT_ROOM' }),
+
+    selectFacility: (facilityId: string) =>
+      dispatch({ type: 'SELECT_FACILITY', payload: facilityId }),
+
+    deselectFacility: () =>
+      dispatch({ type: 'DESELECT_FACILITY' }),
 
     updateHouseName: (name: string) =>
       dispatch({ type: 'UPDATE_HOUSE_NAME', payload: name }),
@@ -299,6 +372,18 @@ export function useKosMap() {
     moveRoom: (floorId: string, roomId: string, x: number, y: number) =>
       dispatch({ type: 'MOVE_ROOM', payload: { floorId, roomId, x, y } }),
 
+    addFacility: (floorId: string, facilityData: Omit<Facility, 'id'>) =>
+      dispatch({
+        type: 'ADD_FACILITY',
+        payload: { floorId, facility: { ...facilityData, id: crypto.randomUUID() } },
+      }),
+
+    updateFacility: (floorId: string, facility: Facility) =>
+      dispatch({ type: 'UPDATE_FACILITY', payload: { floorId, facility } }),
+
+    deleteFacility: (floorId: string, facilityId: string) =>
+      dispatch({ type: 'DELETE_FACILITY', payload: { floorId, facilityId } }),
+
     setDragState: (dragState: DragState | null) =>
       dispatch({ type: 'SET_DRAG_STATE', payload: dragState }),
   };
@@ -314,5 +399,8 @@ export function useKosMap() {
   const selectedRoom =
     activeFloor?.rooms.find(r => r.id === state.selectedRoomId) ?? null;
 
-  return { state, actions, activeFloor, selectedRoom };
+  const selectedFacility =
+    activeFloor?.facilities.find(f => f.id === state.selectedFacilityId) ?? null;
+
+  return { state, actions, activeFloor, selectedRoom, selectedFacility };
 }

@@ -30,9 +30,10 @@ const STATUS_CONFIG: Record<
 interface RoomTileProps {
   room: Room;
   style?: React.CSSProperties;
+  onClick?: () => void;
 }
 
-export function RoomTile({ room, style }: RoomTileProps) {
+export function RoomTile({ room, style, onClick }: RoomTileProps) {
   const cfg = STATUS_CONFIG[room.status];
 
   const formattedPrice =
@@ -47,7 +48,12 @@ export function RoomTile({ room, style }: RoomTileProps) {
   return (
     <div
       style={style}
-      className={`${cfg.bg} ${cfg.border} ${cfg.text} border-2 rounded-lg m-1 p-2.5 flex flex-col gap-1 overflow-hidden`}
+      onClick={onClick}
+      className={[
+        cfg.bg, cfg.border, cfg.text,
+        'border-2 rounded-lg m-1 p-2.5 flex flex-col gap-1 overflow-hidden',
+        onClick ? 'cursor-pointer hover:brightness-95 transition-[filter]' : '',
+      ].join(' ')}
     >
       <div className="flex items-start justify-between gap-1">
         <span className="font-bold text-sm leading-tight">{room.name}</span>

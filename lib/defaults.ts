@@ -20,6 +20,7 @@ export const defaultBoardingHouse: BoardingHouse = {
         { id: 'r-105', name: '105', x: 1, y: 2, width: 1, height: 1, status: 'maintenance', occupant: '',              price: 1200000, notes: 'Perbaikan AC' },
         { id: 'r-106', name: '106', x: 2, y: 2, width: 1, height: 1, status: 'available',   occupant: '',              price: 1500000, notes: '' },
       ],
+      facilities: [],
     },
     {
       id: 'floor-2',
@@ -30,6 +31,7 @@ export const defaultBoardingHouse: BoardingHouse = {
         { id: 'r-203', name: '203', x: 0, y: 2, width: 1, height: 1, status: 'occupied',    occupant: 'Rudi Hartono',  price: 1800000, notes: 'Termasuk listrik' },
         { id: 'r-204', name: '204', x: 1, y: 2, width: 1, height: 1, status: 'available',   occupant: '',              price: 1800000, notes: '' },
       ],
+      facilities: [],
     },
   ],
 };

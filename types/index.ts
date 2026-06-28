@@ -13,10 +13,36 @@ export interface Room {
   notes: string;
 }
 
+export type FacilityType =
+  | 'stair'
+  | 'parking'
+  | 'kitchen'
+  | 'bathroom'
+  | 'laundry'
+  | 'mushola'
+  | 'storage'
+  | 'lobby'
+  | 'garden'
+  | 'custom';
+
+export interface Facility {
+  id: string;
+  name: string;
+  facilityType: FacilityType;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  color: string;   // CSS hex background color (overrides type default for 'custom')
+  icon: string;    // emoji character
+  notes: string;
+}
+
 export interface Floor {
   id: string;
   name: string;
   rooms: Room[];
+  facilities: Facility[];
 }
 
 export interface BoardingHouse {
@@ -28,6 +54,8 @@ export interface BoardingHouse {
 }
 
 export type AppMode = 'view' | 'edit';
+
+export type UsageMode = 'public' | 'admin';
 
 export interface DragState {
   roomId: string;
@@ -44,5 +72,6 @@ export interface AppState {
   mode: AppMode;
   activeFloorId: string;
   selectedRoomId: string | null;
+  selectedFacilityId: string | null;
   dragState: DragState | null;
 }

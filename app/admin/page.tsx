@@ -1,9 +1,9 @@
 import { UsageModeProvider } from '@/context/UsageModeContext';
 import BoardingHouseMap from '@/components/BoardingHouseMap';
 
-export default function Home() {
+export default function AdminPage() {
   return (
-    <UsageModeProvider mode="public">
+    <UsageModeProvider mode="admin">
       <BoardingHouseMap />
     </UsageModeProvider>
   );

@@ -1,4 +1,4 @@
-import type { BoardingHouse } from '@/types';
+import type { BoardingHouse, Floor } from '@/types';
 
 const STORAGE_KEY = 'kos-map-v1';
 
@@ -7,7 +7,13 @@ export function loadFromStorage(): BoardingHouse | null {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw === null) return null;
-    return JSON.parse(raw) as BoardingHouse;
+    const data = JSON.parse(raw) as BoardingHouse;
+    // Normalize floors from older saved data that predate the facilities field
+    data.floors = data.floors.map((f): Floor => ({
+      ...f,
+      facilities: Array.isArray(f.facilities) ? f.facilities : [],
+    }));
+    return data;
   } catch {
     return null;
   }
