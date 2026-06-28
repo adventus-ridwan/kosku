@@ -71,3 +71,7 @@ export function canViewContractHistory(role: UserRole | null): boolean {
 export function canAccessWorkspace(role: UserRole | null): boolean {
   return role === 'owner';
 }
+
+export function canEditPropertyProfile(role: UserRole | null): boolean {
+  return role === 'owner';
+}

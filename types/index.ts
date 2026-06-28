@@ -1,3 +1,21 @@
+import type {
+  PropertyType,
+  PropertyContact,
+  PropertyAddress,
+  PropertyAmenity,
+  PropertyRule,
+  PropertyGalleryConfig,
+} from '@/features/property/types';
+
+export type {
+  PropertyType,
+  PropertyContact,
+  PropertyAddress,
+  PropertyAmenity,
+  PropertyRule,
+  PropertyGalleryConfig,
+};
+
 export type RoomStatus = 'available' | 'occupied' | 'maintenance';
 
 export interface Room {
@@ -51,6 +69,16 @@ export interface BoardingHouse {
   gridCols: number;
   gridRows: number;
   floors: Floor[];
+
+  // Profile fields (ET-002) — all optional so existing code compiles unchanged
+  tagline?:     string;
+  description?: string;
+  type?:        PropertyType;
+  contact?:     PropertyContact;
+  address?:     PropertyAddress;
+  amenities?:   PropertyAmenity[];
+  rules?:       PropertyRule[];
+  gallery?:     PropertyGalleryConfig;
 }
 
 export type AppMode = 'view' | 'edit';

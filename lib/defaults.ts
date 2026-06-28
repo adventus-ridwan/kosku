@@ -1,4 +1,5 @@
 import type { BoardingHouse } from '@/types';
+import { DEFAULT_AMENITIES, DEFAULT_GALLERY_CATEGORIES } from '@/features/property/defaults';
 
 export const DEFAULT_GRID_COLS = 6;
 export const DEFAULT_GRID_ROWS = 5;
@@ -8,6 +9,14 @@ export const defaultBoardingHouse: BoardingHouse = {
   name: 'Kos Ku',
   gridCols: DEFAULT_GRID_COLS,
   gridRows: DEFAULT_GRID_ROWS,
+  tagline: '',
+  description: '',
+  type: 'MIXED',
+  contact: { whatsapp: '', phone: '', email: '' },
+  address: { full: '' },
+  amenities: DEFAULT_AMENITIES,
+  rules: [],
+  gallery: { categories: DEFAULT_GALLERY_CATEGORIES },
   floors: [
     {
       id: 'floor-1',

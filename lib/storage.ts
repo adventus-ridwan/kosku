@@ -1,4 +1,5 @@
 import type { BoardingHouse, Floor } from '@/types';
+import { DEFAULT_AMENITIES, DEFAULT_GALLERY_CATEGORIES } from '@/features/property/defaults';
 
 const STORAGE_KEY = 'kos-map-v1';
 
@@ -8,11 +9,23 @@ export function loadFromStorage(): BoardingHouse | null {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw === null) return null;
     const data = JSON.parse(raw) as BoardingHouse;
+
     // Normalize floors from older saved data that predate the facilities field
     data.floors = data.floors.map((f): Floor => ({
       ...f,
       facilities: Array.isArray(f.facilities) ? f.facilities : [],
     }));
+
+    // Profile field normalizer — must be updated whenever BoardingHouse gains a new field
+    data.tagline     = data.tagline     ?? '';
+    data.description = data.description ?? '';
+    data.type        = data.type        ?? 'MIXED';
+    data.contact     = data.contact     ?? { whatsapp: '', phone: '', email: '' };
+    data.address     = data.address     ?? { full: '' };
+    data.amenities   = Array.isArray(data.amenities) ? data.amenities : DEFAULT_AMENITIES;
+    data.rules       = Array.isArray(data.rules) ? data.rules : [];
+    data.gallery     = data.gallery ?? { categories: DEFAULT_GALLERY_CATEGORIES };
+
     return data;
   } catch {
     return null;
