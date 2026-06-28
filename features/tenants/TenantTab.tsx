@@ -5,7 +5,7 @@ import type { RoomStatus, AppMode } from '@/types';
 import type { Gender } from './types';
 import { useTenant } from './useTenant';
 import { useAuth } from '@/features/auth/useAuth';
-import { canAddTenant } from '@/features/auth/permission';
+import { canAddTenant, canFinishContract } from '@/features/auth/permission';
 
 const FIELD =
   'w-full border border-gray-200 rounded-md px-3 py-2 text-sm text-gray-900 ' +
@@ -17,6 +17,7 @@ interface TenantTabProps {
   roomStatus: RoomStatus;
   mode: AppMode;
   onRoomOccupied: () => void;
+  onRoomVacant: () => void;
 }
 
 interface FormState {
@@ -64,10 +65,11 @@ function formatCurrency(amount: number): string {
   }).format(amount);
 }
 
-export function TenantTab({ roomId, roomStatus, mode, onRoomOccupied }: TenantTabProps) {
+export function TenantTab({ roomId, roomStatus, mode, onRoomOccupied, onRoomVacant }: TenantTabProps) {
   const { role } = useAuth();
-  const { tenant, contract, isLoading, createTenantAndContract } = useTenant(roomId);
+  const { tenant, contract, isLoading, createTenantAndContract, finishContract } = useTenant(roomId);
   const [showForm, setShowForm] = useState(false);
+  const [showFinishConfirm, setShowFinishConfirm] = useState(false);
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({});
 
@@ -115,6 +117,12 @@ export function TenantTab({ roomId, roomStatus, mode, onRoomOccupied }: TenantTa
     setShowForm(false);
     setForm(EMPTY_FORM);
     setErrors({});
+  }
+
+  function handleFinishConfirm() {
+    if (!contract) return;
+    finishContract(contract.id, onRoomVacant);
+    setShowFinishConfirm(false);
   }
 
   function handleCancel() {
@@ -188,6 +196,41 @@ export function TenantTab({ roomId, roomStatus, mode, onRoomOccupied }: TenantTa
             )}
           </dl>
         </div>
+
+        {mode === 'edit' && canFinishContract(role) && (
+          <div className="pt-4 border-t border-gray-100">
+            {showFinishConfirm ? (
+              <div className="rounded-xl bg-amber-50 border border-amber-100 p-4">
+                <p className="text-sm font-medium text-amber-800 mb-0.5">Selesaikan kontrak ini?</p>
+                <p className="text-xs text-amber-600 mb-3">Kamar akan kembali tersedia untuk penghuni baru.</p>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={handleFinishConfirm}
+                    className="flex-1 bg-amber-600 text-white text-sm font-medium py-2 rounded-lg hover:bg-amber-700 transition-colors"
+                  >
+                    Ya, Selesaikan
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowFinishConfirm(false)}
+                    className="flex-1 border border-amber-200 text-amber-700 text-sm font-medium py-2 rounded-lg hover:bg-amber-50 transition-colors"
+                  >
+                    Batal
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setShowFinishConfirm(true)}
+                className="w-full border border-gray-300 text-gray-700 text-sm font-medium py-2 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                Selesaikan Kontrak
+              </button>
+            )}
+          </div>
+        )}
       </div>
     );
   }

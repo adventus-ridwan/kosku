@@ -25,7 +25,8 @@ const STATUS_ACTIVE: Record<RoomStatus, string> = {
   maintenance: 'bg-amber-100 text-amber-800',
 };
 
-const STATUS_OPTIONS: RoomStatus[] = ['available', 'occupied', 'maintenance'];
+// 'occupied' is a derived state — only the contract lifecycle may set it.
+const MANUAL_STATUS_OPTIONS: RoomStatus[] = ['available', 'maintenance'];
 
 // ─── Shared input class (matches AddRoomOverlay) ─────────────────────────────
 
@@ -60,7 +61,7 @@ export function RoomDrawer({
   const { role } = useAuth();
   const canDelete = canDeleteRoom(role);
   const isOpen = room !== null;
-  const { tenant } = useTenant(room?.id ?? null);
+  const { tenant, contract, finishContract } = useTenant(room?.id ?? null);
 
   // localRoom persists during the close animation so the drawer doesn't
   // flash empty while it's sliding out.
@@ -133,6 +134,12 @@ export function RoomDrawer({
       setNameError('Nomor kamar sudah digunakan di lantai ini');
       return;
     }
+    // Occupied → Maintenance: auto-finish the active contract with today as the actual end date.
+    if (room?.status === 'occupied' && localRoom.status === 'maintenance' && contract) {
+      const today = new Date().toISOString().split('T')[0];
+      finishContract(contract.id, () => {}, today);
+    }
+
     onSave(floorId, { ...localRoom, name: trimmed, price: Math.max(0, localRoom.price) });
     onClose();
   }
@@ -148,6 +155,11 @@ export function RoomDrawer({
   function handleRoomOccupied() {
     if (!room) return;
     onSave(floorId, { ...room, status: 'occupied' });
+  }
+
+  function handleRoomVacant() {
+    if (!room) return;
+    onSave(floorId, { ...room, status: 'available' });
   }
 
   const formattedPrice =
@@ -304,24 +316,41 @@ export function RoomDrawer({
                 <label className="block text-xs font-medium text-gray-600 mb-1.5">
                   Status
                 </label>
-                <div className="flex rounded-lg border border-gray-200 overflow-hidden">
-                  {STATUS_OPTIONS.map((s, i) => (
+                {localRoom.status === 'occupied' ? (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2.5 px-3 py-2 rounded-lg bg-blue-50 border border-blue-200">
+                      <span className="w-2 h-2 rounded-full bg-blue-500 shrink-0" />
+                      <span className="text-sm font-medium text-blue-800">{STATUS_LABEL.occupied}</span>
+                      <span className="ml-auto text-xs text-blue-500">Diatur oleh kontrak aktif</span>
+                    </div>
                     <button
-                      key={s}
                       type="button"
-                      onClick={() => update('status', s)}
-                      className={[
-                        'flex-1 py-1.5 text-xs font-medium transition-colors',
-                        i > 0 ? 'border-l border-gray-200' : '',
-                        localRoom.status === s
-                          ? STATUS_ACTIVE[s]
-                          : 'bg-white text-gray-500 hover:bg-gray-50',
-                      ].join(' ')}
+                      onClick={() => update('status', 'maintenance')}
+                      className="w-full py-1.5 text-xs font-medium rounded-lg border border-gray-200 text-gray-600 hover:bg-amber-50 hover:border-amber-200 hover:text-amber-700 transition-colors"
                     >
-                      {STATUS_LABEL[s]}
+                      Pindah ke Perbaikan
                     </button>
-                  ))}
-                </div>
+                  </div>
+                ) : (
+                  <div className="flex rounded-lg border border-gray-200 overflow-hidden">
+                    {MANUAL_STATUS_OPTIONS.map((s, i) => (
+                      <button
+                        key={s}
+                        type="button"
+                        onClick={() => update('status', s)}
+                        className={[
+                          'flex-1 py-1.5 text-xs font-medium transition-colors',
+                          i > 0 ? 'border-l border-gray-200' : '',
+                          localRoom.status === s
+                            ? STATUS_ACTIVE[s]
+                            : 'bg-white text-gray-500 hover:bg-gray-50',
+                        ].join(' ')}
+                      >
+                        {STATUS_LABEL[s]}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* Harga */}
@@ -362,6 +391,7 @@ export function RoomDrawer({
               roomStatus={localRoom.status}
               mode={mode}
               onRoomOccupied={handleRoomOccupied}
+              onRoomVacant={handleRoomVacant}
             />
           )}
         </div>

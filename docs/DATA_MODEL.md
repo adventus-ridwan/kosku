@@ -166,6 +166,31 @@ Meaning
 
 ---
 
+# Room Status Lifecycle
+
+Room status transitions follow strict business rules.
+
+## Manual transitions (user-controlled)
+
+* Available → Maintenance
+* Maintenance → Available
+
+## Contract-driven transitions (automatic)
+
+* Available → Occupied: triggered by creating an ACTIVE Contract.
+* Occupied → Available: triggered by finishing the ACTIVE Contract (Finish Contract button).
+* Occupied → Maintenance: triggered by manually moving an occupied room to Maintenance. The ACTIVE Contract is automatically finished with today's date as the actual contract end date.
+
+## Rules
+
+* Occupied is a derived state. It must never be manually selected.
+* A room in Maintenance must never have an ACTIVE Contract.
+* Finishing a contract always preserves the contract record with status FINISHED.
+* Removing Maintenance returns the room to Available, never to Occupied.
+* A new ACTIVE Contract is required to re-occupy the room.
+
+---
+
 # Source of Truth
 
 Current Tenant

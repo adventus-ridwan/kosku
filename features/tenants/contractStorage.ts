@@ -28,3 +28,13 @@ export function addContract(contract: Contract): void {
 export function getActiveContractByRoomId(roomId: string): Contract | null {
   return loadContracts().find(c => c.roomId === roomId && c.status === 'ACTIVE') ?? null;
 }
+
+export function finishContract(contractId: string, endDate?: string): void {
+  const updated = loadContracts().map(c => {
+    if (c.id !== contractId) return c;
+    return endDate !== undefined
+      ? { ...c, status: 'FINISHED' as const, endDate }
+      : { ...c, status: 'FINISHED' as const };
+  });
+  saveContracts(updated);
+}

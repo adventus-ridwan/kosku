@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { Floor, Room, Facility, RoomStatus, AppMode } from '@/types';
 import { useAuth } from '@/features/auth/useAuth';
 import { canAddRoom, canAddFacility } from '@/features/auth/permission';
+import { useOccupantNames } from '@/features/tenants/useOccupantNames';
 import { RoomTile } from './RoomTile';
 import { FacilityTile } from './FacilityTile';
 import { AddRoomOverlay } from './AddRoomOverlay';
@@ -37,6 +38,7 @@ export function GridCanvas({
 }: GridCanvasProps) {
   const { role } = useAuth();
   const [overlay, setOverlay] = useState<Overlay>(null);
+  const occupantNames = useOccupantNames(floor.rooms);
 
   const totalCells = gridCols * gridRows;
 
@@ -168,6 +170,7 @@ export function GridCanvas({
           <RoomTile
             key={room.id}
             room={room}
+            occupantName={occupantNames[room.id]}
             style={{
               gridColumn: `${room.x + 1} / span ${room.width}`,
               gridRow: `${room.y + 1} / span ${room.height}`,

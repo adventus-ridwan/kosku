@@ -56,6 +56,10 @@ export function canEditTenant(role: UserRole | null): boolean {
   return role === 'penjaga' || role === 'owner';
 }
 
+export function canFinishContract(role: UserRole | null): boolean {
+  return role === 'penjaga' || role === 'owner';
+}
+
 export function canViewTenantInfo(role: UserRole | null): boolean {
   return role === 'penjaga' || role === 'owner';
 }

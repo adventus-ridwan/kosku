@@ -29,11 +29,12 @@ const STATUS_CONFIG: Record<
 
 interface RoomTileProps {
   room: Room;
+  occupantName?: string;
   style?: React.CSSProperties;
   onClick?: () => void;
 }
 
-export function RoomTile({ room, style, onClick }: RoomTileProps) {
+export function RoomTile({ room, occupantName, style, onClick }: RoomTileProps) {
   const cfg = STATUS_CONFIG[room.status];
 
   const formattedPrice =
@@ -64,8 +65,8 @@ export function RoomTile({ room, style, onClick }: RoomTileProps) {
         </span>
       </div>
 
-      {room.occupant && (
-        <span className="text-xs leading-snug truncate opacity-75">{room.occupant}</span>
+      {occupantName && (
+        <span className="text-xs leading-snug truncate opacity-75">{occupantName}</span>
       )}
 
       {formattedPrice && (

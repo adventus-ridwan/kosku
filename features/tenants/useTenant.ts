@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { Tenant, Contract } from './types';
 import { addTenant, getTenantById } from './tenantStorage';
-import { addContract, getActiveContractByRoomId } from './contractStorage';
+import { addContract, getActiveContractByRoomId, finishContract as finishContractInStorage } from './contractStorage';
 
 interface TenantState {
   tenant: Tenant | null;
@@ -62,5 +62,11 @@ export function useTenant(roomId: string | null) {
     setState({ tenant, contract, isLoading: false });
   }
 
-  return { ...state, createTenantAndContract, reload: load };
+  function finishContract(contractId: string, onComplete: () => void, endDate?: string) {
+    finishContractInStorage(contractId, endDate);
+    onComplete();
+    load();
+  }
+
+  return { ...state, createTenantAndContract, finishContract, reload: load };
 }
