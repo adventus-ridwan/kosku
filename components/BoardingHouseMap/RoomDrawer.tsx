@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import type { Room, RoomStatus, AppMode } from '@/types';
 import { useAuth } from '@/features/auth/useAuth';
+import { useUsageMode } from '@/context/UsageModeContext';
 import { canDeleteRoom, canEditRoom, canViewTenantInfo, canViewContractHistory } from '@/features/auth/permission';
 import { TenantTab } from '@/features/tenants/TenantTab';
 import { useTenant } from '@/features/tenants/useTenant';
@@ -60,7 +61,9 @@ export function RoomDrawer({
   onClose,
 }: RoomDrawerProps) {
   const { role } = useAuth();
-  const canDelete = canDeleteRoom(role);
+  const usageMode = useUsageMode();
+  const effectiveRole = usageMode === 'public' ? null : role;
+  const canDelete = canDeleteRoom(effectiveRole);
   const isOpen = room !== null;
   const { tenant, contract, finishContract } = useTenant(room?.id ?? null);
 
@@ -121,7 +124,7 @@ export function RoomDrawer({
   }
 
   function handleSave() {
-    if (!canEditRoom(role)) return;
+    if (!canEditRoom(effectiveRole)) return;
     if (!localRoom) return;
     const trimmed = localRoom.name.trim();
     if (!trimmed) {
@@ -242,7 +245,7 @@ export function RoomDrawer({
             >
               Information
             </button>
-            {canViewTenantInfo(role) && (
+            {canViewTenantInfo(effectiveRole) && (
               <button
                 type="button"
                 onClick={() => { setActiveTab('tenant'); setConfirmDelete(false); }}
@@ -256,7 +259,7 @@ export function RoomDrawer({
                 Tenant
               </button>
             )}
-            {canViewContractHistory(role) && (
+            {canViewContractHistory(effectiveRole) && (
               <button
                 type="button"
                 onClick={() => { setActiveTab('history'); setConfirmDelete(false); }}
@@ -285,7 +288,7 @@ export function RoomDrawer({
                 </dt>
                 <dd className="text-sm font-medium text-gray-900">{formattedPrice}</dd>
               </div>
-              {canViewTenantInfo(role) && (
+              {canViewTenantInfo(effectiveRole) && (
                 <div>
                   <dt className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1">
                     Penghuni
@@ -400,7 +403,7 @@ export function RoomDrawer({
           )}
 
           {/* Tenant tab */}
-          {activeTab === 'tenant' && localRoom && canViewTenantInfo(role) && (
+          {activeTab === 'tenant' && localRoom && canViewTenantInfo(effectiveRole) && (
             <TenantTab
               roomId={localRoom.id}
               roomStatus={localRoom.status}
@@ -411,7 +414,7 @@ export function RoomDrawer({
           )}
 
           {/* History tab */}
-          {activeTab === 'history' && localRoom && canViewContractHistory(role) && (
+          {activeTab === 'history' && localRoom && canViewContractHistory(effectiveRole) && (
             <HistoryTab roomId={localRoom.id} />
           )}
         </div>

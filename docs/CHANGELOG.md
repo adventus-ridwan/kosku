@@ -19,6 +19,16 @@
 
 - LocalStorage SSR handling.
 
+## Sprint 3C.1 - Privacy Regression Fix
+
+### Fixed
+
+- History tab (and Tenant tab) no longer visible to previously-authenticated users on the public route (`/`).
+- Root cause: `RoomDrawer` was reading `role` directly from `useAuth()` (localStorage), which persists across route navigations. On the public route the role was not nulled out, so `canViewContractHistory` / `canViewTenantInfo` returned `true` for any user who had previously logged in.
+- Fix: `RoomDrawer` now calls `useUsageMode()` and derives `effectiveRole = usageMode === 'public' ? null : role`. All permission checks (`canViewTenantInfo`, `canViewContractHistory`, `canEditRoom`, `canDeleteRoom`) use `effectiveRole`. This matches the existing `effectiveMode` pattern in `BoardingHouseMap/index.tsx`.
+
+---
+
 ## Sprint 3C - Contract History
 
 ### Added

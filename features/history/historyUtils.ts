@@ -1,4 +1,10 @@
 import type { ContractStatus } from '@/features/tenants/types';
+
+const STATUS_SORT_ORDER: Record<ContractStatus, number> = {
+  ACTIVE:    0,
+  FINISHED:  1,
+  CANCELLED: 2,
+};
 import { loadContracts } from '@/features/tenants/contractStorage';
 import { loadTenants } from '@/features/tenants/tenantStorage';
 
@@ -48,7 +54,11 @@ export function calculateContractRevenue(monthlyRent: number, durationDays: numb
 export function buildHistoryEntries(roomId: string): HistoryEntry[] {
   const contracts = loadContracts()
     .filter(c => c.roomId === roomId)
-    .sort((a, b) => b.startDate.localeCompare(a.startDate)); // newest first
+    .sort((a, b) => {
+      const statusDiff = STATUS_SORT_ORDER[a.status] - STATUS_SORT_ORDER[b.status];
+      if (statusDiff !== 0) return statusDiff;
+      return b.startDate.localeCompare(a.startDate); // newest first within same status
+    });
 
   const tenantMap = new Map(loadTenants().map(t => [t.id, t]));
 
