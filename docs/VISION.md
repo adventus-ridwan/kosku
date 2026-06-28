@@ -1,8 +1,8 @@
-# Kos Map - Vision
+# Kosku - Vision
 
 ## Project Vision
 
-Kos Map is an interactive boarding house management application centered around a visual floor plan.
+Kosku is an interactive boarding house management application centered around a visual floor plan.
 
 Instead of managing rooms from tables, users manage the boarding house directly from an interactive map.
 

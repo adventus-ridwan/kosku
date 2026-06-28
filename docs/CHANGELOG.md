@@ -1,5 +1,25 @@
 # Changelog
 
+## Sprint P0.1 - Project Rebranding
+
+### Changed
+
+- Product name updated from "Kos Map" to "Kosku" across all user-facing surfaces and documentation.
+- Browser tab title updated to "Kosku".
+- Login page heading updated to "Kosku".
+- Login page subtitle updated to the official tagline: "Kelola kos lebih mudah dengan denah interaktif."
+- `app/layout.tsx` metadata description updated to match the tagline.
+- All `/docs` files updated: headers and body text referencing "Kos Map" replaced with "Kosku".
+
+### Preserved
+
+- `package.json` name field unchanged (`kos-map`).
+- All localStorage keys unchanged (`kos-map-v1`, `kos-map-auth-v1`, `kos-map-tenants-v1`, `kos-map-contracts-v1`).
+- All import paths, variable names, and source folder names unchanged.
+- No business logic modified.
+
+---
+
 ## v0.4
 
 ### Added

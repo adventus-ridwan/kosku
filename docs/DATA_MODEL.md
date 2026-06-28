@@ -1,8 +1,8 @@
-# Kos Map - Data Model
+# Kosku - Data Model
 
 ## Overview
 
-Kos Map is centered around four core business entities:
+Kosku is centered around four core business entities:
 
 * BoardingHouse
 * Room

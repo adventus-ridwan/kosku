@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Kos Map",
-  description: "Peta interaktif untuk manajemen kamar kos",
+  title: "Kosku",
+  description: "Kelola kos lebih mudah dengan denah interaktif.",
 };
 
 export default function RootLayout({

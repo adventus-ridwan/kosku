@@ -1,8 +1,8 @@
-# Kos Map - Project Rules
+# Kosku - Project Rules
 
 ## Vision
 
-Kos Map adalah aplikasi manajemen kos berbasis denah interaktif.
+Kosku adalah aplikasi manajemen kos berbasis denah interaktif.
 
 Target utama project ini adalah membangun portfolio SaaS yang profesional, bukan aplikasi enterprise.
 
@@ -53,4 +53,4 @@ Every sprint should:
 
 # Long-term Goal
 
-Kos Map should feel like a real SaaS product suitable for showcasing in a professional portfolio.
+Kosku should feel like a real SaaS product suitable for showcasing in a professional portfolio.

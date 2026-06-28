@@ -1,4 +1,4 @@
-# Kos Map - Architecture
+# Kosku - Architecture
 
 ## Architecture Style
 

@@ -41,8 +41,8 @@ export default function LoginPage() {
       <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-8 w-full max-w-sm">
 
         <div className="mb-8 text-center">
-          <h1 className="text-2xl font-bold text-gray-900">Kos Map</h1>
-          <p className="text-sm text-gray-500 mt-1">Masuk untuk mengelola properti</p>
+          <h1 className="text-2xl font-bold text-gray-900">Kosku</h1>
+          <p className="text-sm text-gray-500 mt-1">Kelola kos lebih mudah dengan denah interaktif.</p>
         </div>
 
         <div className="mb-6">

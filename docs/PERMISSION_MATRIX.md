@@ -1,4 +1,4 @@
-# Kos Map - Permission Matrix
+# Kosku - Permission Matrix
 
 | Feature                        | Public | Penjaga | Owner |
 | ------------------------------ | :----: | :-----: | :---: |
