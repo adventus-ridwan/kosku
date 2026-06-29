@@ -1,35 +1,73 @@
 # Changelog
 
-## Sprint P0.1 - Project Rebranding
+## ET-006 — Public Experience Foundation
+
+### Added
+
+- `/kos` public route — full public experience page for boarding house guests.
+- `features/public/PublicExperiencePage.tsx` — single-file page with all sections:
+  - **HeroSection**: property name, tagline, type badge, address, WhatsApp CTA and map anchor.
+  - **MapSection**: read-only interactive floor plan wrapped in `UsageModeProvider mode="public"`.
+  - **AboutSection**: conditional on property description.
+  - **AmenitiesSection**: grid of available property-level amenities.
+  - **RoomTypesSection**: published Room Types only, sorted by `sortOrder`, with price, size, capacity, available amenity chips, and per-type WhatsApp link.
+  - **ContactSection**: dark footer with WhatsApp button, phone link, and address.
+- WhatsApp URL normalization: `08xxx → 628xxx`, URL-encoded greeting message.
+- Privacy enforcement: occupant names suppressed in public map (`usageMode === 'public' ? undefined : occupantNames[room.id]`).
+- Admin Toolbar hidden in public mode.
+
+---
+
+## ET-005 — Room Type First Architecture
+
+### Added
+
+- `RoomType` entity: canonical marketing data (name, price, description, size, capacity, amenities, publishStatus, sortOrder, photos).
+- `resolveRoomProfile()` (`lib/resolveRoomProfile.ts`): resolution chain for price, amenities, publishStatus. `undefined` on room = inherit from type.
+- `priceOverride?: number` on `Room` type: explicit price exception without touching Room Type.
+- `schemaVersion?: number` on `BoardingHouse`: enables versioned one-time migrations.
+- Schema migration infrastructure in `lib/storage.ts`: `applyMigrations()`, `MIGRATIONS`, `CURRENT_SCHEMA_VERSION = 2`.
+- **V2 migration** (`migrateToV2`): removes false price and amenity overrides introduced by the v1 normalizer.
+  - Price: clears `priceOverride` if it matches the old `price` field exactly (auto-created, not user-set).
+  - Amenities: clears `roomAmenities` if it exactly matches `DEFAULT_ROOM_AMENITIES` (forced default, not user-set).
+  - `publishStatus` intentionally excluded (cannot distinguish forced default from intentional user action).
+- `defaultBoardingHouse.schemaVersion = 2`: fresh installs start at v2, skip migration.
+- Price override input in `RoomPanel.tsx` and `RoomDrawer.tsx`: "Dari tipe" badge when inheriting.
+- `RoomListItem` in `RoomsPage.tsx` uses `resolveRoomProfile` for displayed price and publishStatus.
+
+### Fixed
+
+- Normalizer-migration conflict: `normalizeRoom` no longer re-creates `priceOverride` from the legacy `price` field. Migrations exclusively own one-time data conversion; normalizers only fill in new schema fields.
+
+---
+
+## Sprint P0.1 — Project Rebranding
 
 ### Changed
 
 - Product name updated from "Kos Map" to "Kosku" across all user-facing surfaces and documentation.
-- Browser tab title updated to "Kosku".
-- Login page heading updated to "Kosku".
-- Login page subtitle updated to the official tagline: "Kelola kos lebih mudah dengan denah interaktif."
-- `app/layout.tsx` metadata description updated to match the tagline.
-- All `/docs` files updated: headers and body text referencing "Kos Map" replaced with "Kosku".
+- Browser tab title, login page heading and subtitle updated.
+- `app/layout.tsx` metadata description updated.
+- All `/docs` files updated.
 
 ### Preserved
 
-- `package.json` name field unchanged (`kos-map`).
-- All localStorage keys unchanged (`kos-map-v1`, `kos-map-auth-v1`, `kos-map-tenants-v1`, `kos-map-contracts-v1`).
-- All import paths, variable names, and source folder names unchanged.
-- No business logic modified.
+- `package.json` name unchanged (`kos-map`).
+- localStorage keys unchanged (`kos-map-v1`, `kos-map-auth-v1`, `kos-map-tenants-v1`, `kos-map-contracts-v1`).
+- All import paths and source folder names unchanged.
 
 ---
 
-## v0.4
+## v0.4 — Authentication
 
 ### Added
 
 - Authentication
 - Login Page
-- Role System
+- Role System (owner, penjaga, public)
 - Auth Context
 - Protected Route
-- Permission Helper
+- Permission helpers
 
 ### Changed
 
@@ -39,87 +77,71 @@
 
 - LocalStorage SSR handling.
 
-## Sprint 3C.1 - Privacy Regression Fix
+---
+
+## Sprint 3C.1 — Privacy Regression Fix
 
 ### Fixed
 
-- History tab (and Tenant tab) no longer visible to previously-authenticated users on the public route (`/`).
-- Root cause: `RoomDrawer` was reading `role` directly from `useAuth()` (localStorage), which persists across route navigations. On the public route the role was not nulled out, so `canViewContractHistory` / `canViewTenantInfo` returned `true` for any user who had previously logged in.
-- Fix: `RoomDrawer` now calls `useUsageMode()` and derives `effectiveRole = usageMode === 'public' ? null : role`. All permission checks (`canViewTenantInfo`, `canViewContractHistory`, `canEditRoom`, `canDeleteRoom`) use `effectiveRole`. This matches the existing `effectiveMode` pattern in `BoardingHouseMap/index.tsx`.
+- History tab (and Tenant tab) no longer visible to previously-authenticated users on the public route.
+- Root cause: `RoomDrawer` read `role` directly from `useAuth()` (localStorage), which persists across route navigations.
+- Fix: `RoomDrawer` calls `useUsageMode()` and derives `effectiveRole = usageMode === 'public' ? null : role`. All permission checks use `effectiveRole`.
 
 ---
 
-## Sprint 3C - Contract History
+## Sprint 3C — Contract History
 
 ### Added
 
-- `features/history/historyUtils.ts` — pure calculation functions: `calculateDurationDays`, `formatDuration`, `calculateContractRevenue`, `buildHistoryEntries`, `buildHistorySummary`.
-- `features/history/HistoryTab.tsx` — History tab UI: summary cards (total contracts, lifetime revenue, average stay) + contract list sorted newest-first.
+- `features/history/historyUtils.ts` — pure calculation functions: duration, revenue, summary builder.
+- `features/history/HistoryTab.tsx` — summary cards (total contracts, lifetime revenue, average stay) + sorted contract list.
 - `canViewContractHistory` permission helper (penjaga + owner).
-- History tab in Room Drawer (gated by `canViewContractHistory`).
+- History tab in Room Drawer, gated by `canViewContractHistory`.
 
 ### Business Rules
 
-- History is derived directly from Contract storage — no new storage introduced.
-- Summary includes all contracts (ACTIVE, FINISHED, CANCELLED).
-- Revenue formula: `monthlyRent × (durationDays / 30)` per DATA_MODEL.
-- History updates automatically when the user switches to the tab (fresh mount on each tab switch).
+- History derived from Contract storage — no new storage.
+- Revenue formula: `monthlyRent × (durationDays / 30)`.
 
 ---
 
-## Sprint 3B.1 - Contract Business Rules
+## Sprint 3B.1 — Contract Business Rules
 
 ### Added
 
-- Room Status Lifecycle rules documented in `DATA_MODEL.md`.
-- Occupied → Maintenance transition: automatically finishes the ACTIVE contract with today's date as the actual end date.
-- "Pindah ke Perbaikan" button shown in the status field when a room is occupied.
+- Occupied → Maintenance transition: finishes the ACTIVE contract with today's date.
+- "Pindah ke Perbaikan" button in status field when room is occupied.
 
 ### Changed
 
-- `contractStorage.finishContract` now accepts an optional `endDate` parameter to record the actual termination date.
-- `useTenant.finishContract` threads the optional `endDate` through to storage.
-- `RoomDrawer.handleSave` detects the occupied → maintenance transition and calls the shared finish-contract logic before saving.
-
-### Preserved
-
-- FINISHED contracts always remain in storage.
-- Occupied cannot be manually selected (Rule 1 unchanged).
-- Maintenance → Available returns the room to available, never occupied.
+- `contractStorage.finishContract` accepts optional `endDate`.
+- `useTenant.finishContract` threads `endDate` through.
+- `RoomDrawer.handleSave` detects occupied → maintenance and calls finish-contract before saving.
 
 ---
 
-## Sprint 3B - Contract Lifecycle
+## Sprint 3B — Contract Lifecycle
 
 ### Added
 
-- Finish Contract action inside Tenant tab (edit mode, penjaga + owner only).
-- Inline confirmation dialog before finishing a contract.
-- `finishContract` storage function in `contractStorage.ts`.
-- `canFinishContract` permission helper in `permission.ts`.
-- `finishContract` method exposed from `useTenant` hook.
-- `onRoomVacant` callback on `TenantTab` component.
+- Finish Contract action inside Tenant tab (penjaga + owner).
+- Inline confirmation dialog before finishing.
+- `finishContract` in `contractStorage.ts`.
+- `canFinishContract` permission helper.
+- `onRoomVacant` callback on `TenantTab`.
 
 ### Changed
 
-- Room status updates to `available` immediately after a contract is finished.
-- `RoomDrawer` passes `handleRoomVacant` to `TenantTab`.
-
-### Preserved
-
-- FINISHED contracts remain in storage — never deleted.
-- Tenant records are never deleted automatically.
-- A new tenant can be added to the room immediately after finishing a contract.
+- Room status → `available` immediately after contract is finished.
 
 ---
 
-## Sprint 3A.1 - Stabilization
+## Sprint 3A.1 — Stabilization
 
 ### Fixed
 
-- Tenant information now derives from ACTIVE Contract.
-- Public users can no longer view tenant information.
+- Tenant information derives from ACTIVE Contract.
+- Public users cannot view tenant information.
 - Maintenance rooms cannot create active contracts.
 - Fixed width/height numeric input behavior.
 - Verified facility deletion.
-- Regression testing completed successfully.
