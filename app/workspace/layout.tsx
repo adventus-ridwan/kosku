@@ -1,10 +1,10 @@
-import { OwnerRoute } from '@/features/auth/OwnerRoute';
+import { ProtectedRoute } from '@/features/auth/ProtectedRoute';
 import { WorkspaceLayout } from '@/components/WorkspaceLayout';
 
 export default function WorkspaceRootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <OwnerRoute>
+    <ProtectedRoute>
       <WorkspaceLayout>{children}</WorkspaceLayout>
-    </OwnerRoute>
+    </ProtectedRoute>
   );
 }

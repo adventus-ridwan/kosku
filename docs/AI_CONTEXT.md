@@ -34,7 +34,7 @@ Full details: `docs/ARCHITECTURE_DECISIONS.md`.
 
 ## Current project status
 
-**Last updated:** 2026-06-29 | **Build:** Clean (15 routes, 0 lint errors, ET-006.1 complete)
+**Last updated:** 2026-06-29 | **Build:** Clean (16 routes, 0 lint errors, ET-007 complete)
 
 | Area | Status |
 |---|---|
@@ -44,8 +44,10 @@ Full details: `docs/ARCHITECTURE_DECISIONS.md`.
 | Room Types + inheritance + v2 migration | ✅ Complete |
 | Public experience page (`/kos`) | ✅ Complete |
 | Property identity loop (workspace ↔ public) | ✅ Complete (ET-006.1) |
-| Dashboard | 🚧 Stub — **next sprint (ET-007)** |
-| Floor management | ❌ Not started |
+| Map Studio (`/workspace/denah`) | ✅ Complete (ET-007) |
+| Dashboard | 🚧 Stub — ET-010 (repositioned, see ADR-010) |
+| Floor management | ❌ Not started — ET-008 |
+| Preview Mode | ❌ Not started — ET-009 |
 | Gallery / photo upload | ❌ Not started |
 | Deployment | ❌ Not started |
 
@@ -60,6 +62,8 @@ Full details: `docs/ARCHITECTURE_DECISIONS.md`.
 | ET-005 | Room Type First architecture, price override, v2 migration |
 | ET-006 | Public experience page at `/kos` |
 | ET-006.1 | Property identity polish: root redirect, workspace header name, sidebar preview link, public hero "Workspace →" entry |
+| ADR-010 | Map-first workspace architecture decision — roadmap reprioritized, ET-007 redefined |
+| ET-007 | Map Studio + Workspace Refactor — `/workspace/denah`, collapsible sidebar, per-route RBAC, penjaga workspace access, post-login redirect |
 
 Full changelog: `docs/CHANGELOG.md`.
 
@@ -81,10 +85,11 @@ Full list: `docs/TECH_DEBT.md`.
 
 ## Current priorities
 
-1. **ET-007 — Dashboard** (next sprint): occupancy summary + revenue summary for the owner. Data layer exists; this is a UI sprint. No new storage required.
-2. **TD-007**: Redirect `/` to `/kos` for public visitors.
+1. **ET-008 — Floor Management**: add/rename/remove floors from Map Studio UI. Currently floors are static in the map editor. This unblocks owners with multi-floor properties from using the map accurately.
+2. **ET-009 — Preview Mode**: authenticated users see `/kos` as guests do, with lightweight Quick Edit overlay.
+3. **ET-010 — Dashboard**: occupancy + revenue summary, owner-only. Repositioned after map-first experience is solid (ADR-010).
 
-Backlog: `docs/BACKLOG.md`.
+Roadmap rationale: `docs/ADR-010-Map-First-Workspace.md`.
 
 ---
 
@@ -120,3 +125,24 @@ For a new session starting development:
 - Prefer editing existing files to creating new ones.
 - After completing a sprint: update **this file** (status table + completed sprints), `docs/CHANGELOG.md`, `docs/PROJECT_STATE.md`, and `docs/TECH_DEBT.md`.
 - Run `npm run lint && npm run build` before declaring a sprint complete.
+
+---
+
+## Product Philosophy
+
+Kosku is map-first. (ADR-010)
+
+The interactive boarding house map is the operational center of the product. Post-login destination is `/workspace/denah`, not the dashboard.
+
+Owners naturally think spatially rather than through tables. The map answers "which room is available?" immediately; a list requires a query.
+
+Every new feature should strengthen the map-first workflow.
+
+**Three surfaces:**
+- `/workspace/denah` — Map Studio: daily operational entry point
+- `/workspace/rooms|tenants|contracts` — List tools: sweep/bulk operations
+- `/kos` — Public experience: guest-facing, read-only by default
+
+**Two supporting surfaces:**
+- `/workspace/dashboard` — Reporting (owner-only, secondary)
+- Preview Mode on `/kos` — Bridge for owners to see what guests see, with Quick Edit (ET-009)

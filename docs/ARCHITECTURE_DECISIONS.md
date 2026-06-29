@@ -1,6 +1,6 @@
 # Kosku — Architecture Decisions
 
-**Last updated:** 2026-06-29
+**Last updated:** 2026-06-29 (ADR-010 added)
 
 ---
 
@@ -106,3 +106,19 @@ features/
 - `kos-map-auth-v1` — Auth session
 
 **Rationale:** Prevents unrelated reads from loading all data. Tenant/contract data never leaks into the public-accessible BoardingHouse blob.
+
+---
+
+## ADR-010: Map-First Workspace Architecture
+
+**Decision:** The interactive floor plan (`/workspace/denah`) is the primary operational interface of Kosku, not the Dashboard. Post-login destination is `/workspace/denah`. The workspace uses a collapsible sidebar (collapsed by default on the map page) to maximize canvas space while keeping navigation accessible. Per-route RBAC replaces the layout-level `OwnerRoute` guard, allowing penjaga to access operational routes (denah, rooms, tenants, contracts) while owner-only routes are guarded at the page level.
+
+**Surface model:**
+- `/workspace/denah` — Map Studio: primary operational surface, daily workflow entry point
+- `/workspace/rooms`, `/workspace/tenants`, `/workspace/contracts` — list tools: supporting sweep/bulk operations
+- `/workspace/dashboard` — summary and reporting: secondary surface for owners
+- `/workspace/property`, `/workspace/room-types`, `/workspace/settings` — configuration: infrequent access, owner-only
+
+**Rationale:** Owners and caretakers think spatially. The map immediately communicates the state of every room without requiring a query. Dashboard reports on data already entered — useful, but not the right entry point for daily operations. See `docs/ADR-010-Map-First-Workspace.md` for full rationale, alternatives considered, and consequences.
+
+**Key invariant:** `BoardingHouseMap` is unchanged. It receives `UsageModeContext` from its parent route and has no knowledge of which route it lives on. ADR-004 and ADR-008 remain unaffected.

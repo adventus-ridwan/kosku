@@ -1,10 +1,5 @@
-import { UsageModeProvider } from '@/context/UsageModeContext';
-import BoardingHouseMap from '@/components/BoardingHouseMap';
+import { redirect } from 'next/navigation';
 
 export default function AdminPage() {
-  return (
-    <UsageModeProvider mode="admin">
-      <BoardingHouseMap />
-    </UsageModeProvider>
-  );
+  redirect('/workspace/denah');
 }

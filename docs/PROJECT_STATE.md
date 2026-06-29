@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-06-29
 **Current branch:** main
-**Build status:** Clean (15 routes, no type errors, ET-006.1 complete)
+**Build status:** Clean (16 routes, no type errors, ET-007 complete)
 
 ---
 
@@ -29,6 +29,9 @@ Room Types introduced as first-class entities owning canonical marketing data (p
 ### ET-006.1 — Property Identity Polish
 Root `/` redirects to `/kos`. Workspace header shows live property name. Sidebar has "Lihat halaman publik" link. PropertyPage has inline preview link. Public hero has "Workspace →" entry point. Resolves TD-007.
 
+### ET-007 — Map Studio + Workspace Refactor
+`/workspace/denah` created as Map Studio (primary operational interface). Workspace layout changed from `OwnerRoute` to `ProtectedRoute` — penjaga can now access the workspace. Per-route RBAC via `navConfig.ts` `roles` field and per-page `OwnerRoute` guards on owner-only pages. Sidebar gains collapsible desktop mode (defaults collapsed on denah route). `/admin` redirects to `/workspace/denah`. Post-login destination changed to `/workspace/denah`.
+
 ---
 
 ## Current MVP Status
@@ -40,7 +43,8 @@ Root `/` redirects to `/kos`. Workspace header shows live property name. Sidebar
 | Tenant & contracts | ✅ Complete | Full lifecycle |
 | Room Types | ✅ Complete | CRUD, inheritance, v2 migration |
 | Public experience | ✅ Complete | `/kos` route, all sections |
-| Dashboard | 🚧 Stub | Workspace page exists, no content |
+| Map Studio (`/workspace/denah`) | ✅ Complete | Map editor in workspace, penjaga access |
+| Dashboard | 🚧 Stub | Workspace page exists, no content — ET-010 |
 | Floor management | ❌ Not started | Floors are static in current UI |
 | Gallery | ❌ Not started | `RoomType.photos` reserved but unused |
 | Deployment | ❌ Not started | localhost only |
@@ -50,23 +54,48 @@ Root `/` redirects to `/kos`. Workspace header shows live property name. Sidebar
 ## Active Routes
 
 ```
-/           → Redirects to /kos
-/login      → Login page
-/admin      → Admin map (protected)
-/kos        → Public experience page
-/workspace  → Workspace (protected, redirects to /workspace/dashboard)
+/                      → Redirects to /kos
+/login                 → Login page (post-login: /workspace/denah)
+/admin                 → Redirects to /workspace/denah
+/kos                   → Public experience page
+/workspace             → Workspace (any authenticated user, redirects to /workspace/dashboard)
+/workspace/denah       → Map Studio (owner + penjaga)
+/workspace/dashboard   → Dashboard stub (owner only)
+/workspace/property    → Property settings (owner only)
+/workspace/room-types  → Room type management (owner only)
+/workspace/rooms       → Room list (owner + penjaga)
+/workspace/tenants     → Tenant list (owner + penjaga)
+/workspace/contracts   → Contract list (owner + penjaga)
+/workspace/settings    → Settings (owner only)
 ```
 
 ---
 
-## Next Recommended Sprint: ET-007 — Dashboard (or next product sprint)
+## Architecture Direction (ADR-010)
 
-Build the owner dashboard that surfaced occupancy and revenue data. The underlying data (contracts, tenants, room status) is already complete; this is a pure UI/presentation sprint.
+**Map-first workspace.** The interactive floor plan is the primary operational interface, not the Dashboard. Dashboard is a secondary reporting surface. See `docs/ADR-010-Map-First-Workspace.md`.
+
+---
+
+## Next Sprint: ET-008 — Floor Management
+
+**Goal:** Allow owners to add, rename, and remove floors from within Map Studio.
+
+Currently floors are static — the data model supports multiple floors but the UI has no way to create or rename them. This is a blocker for owners with multi-floor properties.
 
 Scope:
-- Occupancy summary (total / occupied / available / maintenance)
-- Revenue summary from finished contracts
-- Recent activity feed
-- Owner-only access (`canViewDashboard(role)`)
+- Add/rename/delete floors via UI within `/workspace/denah`
+- Default: single "Lantai 1" floor (already exists for all users)
+- Guard: owner-only (floor structure is a property management concern)
 
-Estimated effort: Medium (1–2 sessions). Data layer exists; no new storage required.
+---
+
+## Upcoming Sprints (Revised Roadmap)
+
+| Sprint | Goal |
+|---|---|
+| ~~ET-007~~ | ~~Map Studio — `/workspace/denah`, collapsible sidebar, per-route RBAC~~ — **Done** |
+| ET-008 | Floor Management — add/rename/remove floors from Map Studio UI |
+| ET-009 | Preview Mode — authenticated owners see `/kos` as guests do, with Quick Edit |
+| ET-010 | Dashboard — occupancy + revenue summary, owner-only |
+| v1.0   | Deploy, polish |

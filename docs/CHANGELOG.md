@@ -1,5 +1,32 @@
 # Changelog
 
+## ET-007 — Map Studio + Workspace Refactor
+
+### Added
+
+- **`/workspace/denah` — Map Studio**: new route wrapping `BoardingHouseMap` with `mode="admin"` inside the workspace layout. The map's full editing workflow (add/edit rooms, facilities, mode switching) is now accessible from within the workspace.
+- **`canAccessMapStudio` permission helper** (`features/auth/permission.ts`): owner + penjaga. Semantic helper for future use as the workspace grows.
+
+### Changed
+
+- **Workspace layout guard**: `app/workspace/layout.tsx` changed from `OwnerRoute` (owner only) to `ProtectedRoute` (any authenticated user). Penjaga can now access the workspace.
+- **Per-route RBAC**: owner-only workspace pages (`/workspace/dashboard`, `/workspace/property`, `/workspace/room-types`, `/workspace/settings`) each wrap their content in `OwnerRoute`. Penjaga attempting to access these pages is redirected to `/workspace/denah`.
+- **`OwnerRoute` redirect target**: changed from `/admin` to `/workspace/denah`. Penjaga unauthorized redirect now goes directly to Map Studio.
+- **`navConfig.ts` — Denah added first, roles populated**: "Denah" (`/workspace/denah`) is the first nav item. Operational items (Kamar, Penghuni, Kontrak) have no `roles` restriction. Management items (Dashboard, Properti, Tipe Kamar, Pengaturan) have `roles: ['owner']`.
+- **Sidebar — collapsible (desktop)**: sidebar now supports a collapsed icon-strip mode (48px) alongside the full expanded mode (224px). Toggle button (‹/›) in the sidebar footer. `title` attributes provide tooltip labels in collapsed mode.
+- **Sidebar — role-aware nav filtering**: sidebar filters `NAV_ITEMS` by the current user's role. Penjaga sees Denah, Kamar, Penghuni, Kontrak only.
+- **Sidebar — defaults to collapsed on `/workspace/denah`**: when the workspace layout first renders on the denah route, the sidebar initializes in collapsed state to maximize map canvas.
+- **Map page layout**: `/workspace/denah` renders without the standard `p-6 overflow-auto` padding — the main content area switches to `overflow-hidden` to let the map fill the workspace canvas cleanly.
+- **`/admin` redirect**: `app/admin/page.tsx` now redirects to `/workspace/denah`. Existing bookmarks and links are preserved.
+- **Post-login destination**: `app/login/page.tsx` now pushes to `/workspace/denah` instead of `/admin`. Both owner and penjaga land on Map Studio after login.
+
+### Resolved
+
+- Map editor was previously only accessible via `/admin`, outside the workspace layout and inaccessible to penjaga from within the workspace.
+- Penjaga was blocked from the workspace entirely by the layout-level `OwnerRoute`.
+
+---
+
 ## ET-006.1 — Property Identity Polish
 
 ### Changed

@@ -7,7 +7,7 @@ export function OwnerRoute({ children }: { children: React.ReactNode }) {
   return (
     <AccessGuard
       canAccess={canAccessWorkspace}
-      notAuthorizedRedirect="/admin"
+      notAuthorizedRedirect="/workspace/denah"
     >
       {children}
     </AccessGuard>

@@ -19,13 +19,13 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (!isLoading && isAuthenticated) {
-      router.replace('/admin');
+      router.replace('/workspace/denah');
     }
   }, [isLoading, isAuthenticated, router]);
 
   function handleLogin() {
     login(selected);
-    router.push('/admin');
+    router.push('/workspace/denah');
   }
 
   if (isLoading || isAuthenticated) {

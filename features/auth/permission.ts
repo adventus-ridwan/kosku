@@ -72,6 +72,10 @@ export function canAccessWorkspace(role: UserRole | null): boolean {
   return role === 'owner';
 }
 
+export function canAccessMapStudio(role: UserRole | null): boolean {
+  return role === 'penjaga' || role === 'owner';
+}
+
 export function canEditPropertyProfile(role: UserRole | null): boolean {
   return role === 'owner';
 }
