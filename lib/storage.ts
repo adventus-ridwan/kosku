@@ -1,5 +1,6 @@
-import type { BoardingHouse, Floor } from '@/types';
+import type { BoardingHouse, Floor, Room } from '@/types';
 import { DEFAULT_AMENITIES, DEFAULT_GALLERY_CATEGORIES } from '@/features/property/defaults';
+import { DEFAULT_ROOM_AMENITIES } from '@/features/rooms/defaults';
 
 const STORAGE_KEY = 'kos-map-v1';
 
@@ -10,10 +11,16 @@ export function loadFromStorage(): BoardingHouse | null {
     if (raw === null) return null;
     const data = JSON.parse(raw) as BoardingHouse;
 
-    // Normalize floors from older saved data that predate the facilities field
+    // Normalize floors and rooms — update both blocks whenever Floor or Room gains a new field
     data.floors = data.floors.map((f): Floor => ({
       ...f,
       facilities: Array.isArray(f.facilities) ? f.facilities : [],
+      rooms: f.rooms.map((r): Room => ({   // Room profile normalizer (ET-003)
+        ...r,
+        publishStatus: r.publishStatus ?? 'draft',
+        description:   r.description   ?? '',
+        roomAmenities: Array.isArray(r.roomAmenities) ? r.roomAmenities : DEFAULT_ROOM_AMENITIES,
+      })),
     }));
 
     // Profile field normalizer — must be updated whenever BoardingHouse gains a new field

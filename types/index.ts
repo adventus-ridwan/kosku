@@ -7,6 +7,11 @@ import type {
   PropertyGalleryConfig,
 } from '@/features/property/types';
 
+import type {
+  PublishStatus,
+  RoomAmenity,
+} from '@/features/rooms/types';
+
 export type {
   PropertyType,
   PropertyContact,
@@ -14,6 +19,8 @@ export type {
   PropertyAmenity,
   PropertyRule,
   PropertyGalleryConfig,
+  PublishStatus,
+  RoomAmenity,
 };
 
 export type RoomStatus = 'available' | 'occupied' | 'maintenance';
@@ -29,6 +36,14 @@ export interface Room {
   occupant: string;
   price: number;   // monthly rent in IDR
   notes: string;
+
+  // Profile fields (ET-003) — marketing data, managed in workspace RoomPanel
+  // Operational data (status, price, tenant, contract) stays in the map RoomDrawer
+  publishStatus?: PublishStatus;
+  description?:   string;
+  size?:          number;   // sq meters
+  capacity?:      number;   // max occupants
+  roomAmenities?: RoomAmenity[];
 }
 
 export type FacilityType =

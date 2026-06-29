@@ -75,3 +75,7 @@ export function canAccessWorkspace(role: UserRole | null): boolean {
 export function canEditPropertyProfile(role: UserRole | null): boolean {
   return role === 'owner';
 }
+
+export function canPublishRoom(role: UserRole | null): boolean {
+  return role === 'owner';
+}
