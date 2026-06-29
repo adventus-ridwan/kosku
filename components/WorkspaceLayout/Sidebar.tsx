@@ -38,25 +38,39 @@ export function Sidebar({ open, onClose }: SidebarProps) {
           <span className="text-sm font-bold text-gray-900">Kosku</span>
         </div>
 
-        <nav className="flex-1 px-2 py-3 overflow-y-auto">
-          {NAV_ITEMS.map(item => {
-            const isActive = pathname.startsWith(item.href);
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={[
-                  'flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors mb-0.5',
-                  isActive
-                    ? 'bg-gray-100 text-gray-900 font-medium'
-                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900',
-                ].join(' ')}
-              >
-                <span aria-hidden="true">{item.icon}</span>
-                <span>{item.label}</span>
-              </Link>
-            );
-          })}
+        <nav className="flex-1 px-2 py-3 overflow-y-auto flex flex-col">
+          <div className="flex-1">
+            {NAV_ITEMS.map(item => {
+              const isActive = pathname.startsWith(item.href);
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={[
+                    'flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors mb-0.5',
+                    isActive
+                      ? 'bg-gray-100 text-gray-900 font-medium'
+                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900',
+                  ].join(' ')}
+                >
+                  <span aria-hidden="true">{item.icon}</span>
+                  <span>{item.label}</span>
+                </Link>
+              );
+            })}
+          </div>
+
+          <div className="border-t border-gray-100 pt-3 mt-3">
+            <a
+              href="/kos"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-gray-500 hover:bg-gray-50 hover:text-gray-700 transition-colors"
+            >
+              <span aria-hidden="true">🌐</span>
+              <span>Lihat halaman publik</span>
+            </a>
+          </div>
         </nav>
       </aside>
     </>

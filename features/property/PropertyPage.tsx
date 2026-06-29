@@ -73,7 +73,17 @@ export function PropertyPage() {
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-lg font-semibold text-gray-900">Properti</h1>
-          <p className="text-sm text-gray-400 mt-0.5">Kelola informasi properti Anda.</p>
+          <p className="text-sm text-gray-400 mt-0.5">
+            Kelola informasi properti Anda.{' '}
+            <a
+              href="/kos"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-500 hover:text-blue-600 transition-colors"
+            >
+              Lihat tampilan publik →
+            </a>
+          </p>
         </div>
         {canEdit && (
           <div className="flex items-center gap-2 shrink-0 pt-0.5">

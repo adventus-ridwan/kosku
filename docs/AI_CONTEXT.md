@@ -34,7 +34,7 @@ Full details: `docs/ARCHITECTURE_DECISIONS.md`.
 
 ## Current project status
 
-**Last updated:** 2026-06-29 | **Build:** Clean (15 routes, 0 lint errors)
+**Last updated:** 2026-06-29 | **Build:** Clean (15 routes, 0 lint errors, ET-006.1 complete)
 
 | Area | Status |
 |---|---|
@@ -43,6 +43,7 @@ Full details: `docs/ARCHITECTURE_DECISIONS.md`.
 | Tenant & contract lifecycle | ✅ Complete |
 | Room Types + inheritance + v2 migration | ✅ Complete |
 | Public experience page (`/kos`) | ✅ Complete |
+| Property identity loop (workspace ↔ public) | ✅ Complete (ET-006.1) |
 | Dashboard | 🚧 Stub — **next sprint (ET-007)** |
 | Floor management | ❌ Not started |
 | Gallery / photo upload | ❌ Not started |
@@ -58,6 +59,7 @@ Full details: `docs/ARCHITECTURE_DECISIONS.md`.
 | Sprint P0.1 | Rebranding: "Kos Map" → "Kosku" |
 | ET-005 | Room Type First architecture, price override, v2 migration |
 | ET-006 | Public experience page at `/kos` |
+| ET-006.1 | Property identity polish: root redirect, workspace header name, sidebar preview link, public hero "Workspace →" entry |
 
 Full changelog: `docs/CHANGELOG.md`.
 
@@ -67,7 +69,7 @@ Full changelog: `docs/CHANGELOG.md`.
 
 | ID | Severity | Issue |
 |---|---|---|
-| TD-007 | Medium | `/` route still shows raw admin map; should redirect to `/kos` |
+| TD-007 | ~~Medium~~ | ~~`/` route still shows raw admin map~~ — **Resolved in ET-006.1** |
 | TD-008 | High | Dashboard workspace is a stub |
 | TD-001 | Medium | `publishStatus` inheritance gap — old 'draft' values preserved in v2 migration |
 | TD-002 | Medium | No explicit "inherit vs override" UI for room fields (Gap 3) |

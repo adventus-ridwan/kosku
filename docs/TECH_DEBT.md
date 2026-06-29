@@ -76,15 +76,9 @@ Severity scale: **High** (blocks a feature or causes user-visible bugs) / **Medi
 
 ---
 
-## TD-007: `/` Route Still Shows Raw Admin Map — Medium
+## ~~TD-007: `/` Route Still Shows Raw Admin Map~~ — **Resolved in ET-006.1**
 
-**Location:** `app/page.tsx`
-
-**Problem:** The root route renders the raw boarding house map. Now that `/kos` exists as the public experience, `/` should redirect to `/kos` for public users (or remain as an admin-only entry point with a redirect).
-
-**Impact:** Public visitors who land on `/` see the admin map, not the polished public experience.
-
-**Resolution path:** Redirect `/` → `/kos`, or add a proper landing/splash page at `/`.
+`app/page.tsx` now redirects to `/kos` via `next/navigation` `redirect()`.
 
 ---
 

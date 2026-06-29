@@ -42,7 +42,15 @@ interface HeroProps {
 function HeroSection({ name, tagline, address, type, waUrl }: HeroProps) {
   return (
     <section className="bg-slate-900 text-white">
-      <div className="max-w-3xl mx-auto px-6 py-20 sm:py-28">
+      <div className="max-w-3xl mx-auto px-6 pt-6 pb-20 sm:pb-28">
+        <div className="flex justify-end mb-10">
+          <a
+            href="/workspace"
+            className="text-xs text-slate-500 hover:text-slate-300 transition-colors"
+          >
+            Workspace →
+          </a>
+        </div>
         {type && (
           <p className="text-xs font-semibold uppercase tracking-widest text-amber-400 mb-5">
             {PROPERTY_TYPE_LABEL[type]}

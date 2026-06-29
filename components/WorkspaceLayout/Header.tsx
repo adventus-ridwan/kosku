@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/features/auth/useAuth';
+import { usePropertyProfile } from '@/features/property/usePropertyProfile';
 import { Breadcrumb } from './Breadcrumb';
 
 const ROLE_LABEL: Record<string, string> = {
@@ -15,7 +16,9 @@ interface HeaderProps {
 
 export function Header({ onMenuOpen }: HeaderProps) {
   const { role, logout } = useAuth();
+  const { boardingHouse, isLoading: profileLoading } = usePropertyProfile();
   const router = useRouter();
+  const propertyName = !profileLoading ? (boardingHouse.name || 'Properti') : 'Properti';
 
   function handleLogout() {
     logout();
@@ -35,14 +38,14 @@ export function Header({ onMenuOpen }: HeaderProps) {
         </svg>
       </button>
 
-      {/* Property switcher — placeholder; no interactivity until multi-property support is built */}
+      {/* Property switcher — single-property MVP; no interactivity until multi-property is built */}
       <div
-        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-gray-200 cursor-default select-none shrink-0"
+        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-gray-200 cursor-default select-none shrink-0 max-w-[160px]"
         title="Multi-property support coming soon"
         aria-disabled="true"
       >
-        <span className="text-sm font-medium text-gray-400">Kos Melati</span>
-        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+        <span className="text-sm font-medium text-gray-700 truncate">{propertyName}</span>
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true" className="shrink-0">
           <path d="M3 4.5L6 7.5L9 4.5" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       </div>

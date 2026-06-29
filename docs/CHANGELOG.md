@@ -1,5 +1,21 @@
 # Changelog
 
+## ET-006.1 — Property Identity Polish
+
+### Changed
+
+- **Root route redirect**: `/` now redirects to `/kos`. Public visitors always land on the public experience page. Owners navigate to `/workspace` or `/login` directly.
+- **Workspace header — live property name**: The workspace header property switcher now displays the actual `boardingHouse.name` from storage instead of the hardcoded placeholder "Kos Melati". Falls back to "Properti" while loading.
+- **Workspace sidebar — "Lihat halaman publik" link**: A secondary link at the bottom of the workspace sidebar opens `/kos` in a new tab. Visually separated from the main nav by a divider.
+- **Property workspace page — preview link**: The `Properti` page subtitle now includes a "Lihat tampilan publik →" link that opens `/kos` in a new tab. Directly connects the editing surface to the public projection.
+- **Public page hero — "Workspace →" entry point**: A minimal right-aligned "Workspace →" text link at the top of the hero section links to `/workspace`. Unauthenticated visitors are redirected to `/login` by the auth guard. The link is discoverable but does not compete with the primary tenant-facing CTAs.
+
+### Resolved tech debt
+
+- TD-007: Root `/` route no longer shows the raw admin map.
+
+---
+
 ## ET-006 — Public Experience Foundation
 
 ### Added

@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-06-29
 **Current branch:** main
-**Build status:** Clean (15 routes, no type errors)
+**Build status:** Clean (15 routes, no type errors, ET-006.1 complete)
 
 ---
 
@@ -26,6 +26,9 @@ Room Types introduced as first-class entities owning canonical marketing data (p
 ### ET-006 — Public Experience Foundation
 `/kos` public route with hero, interactive map (read-only), about section, property amenities, room type cards, and contact section. Privacy enforced: occupant names suppressed on public map. Toolbar hidden in public mode.
 
+### ET-006.1 — Property Identity Polish
+Root `/` redirects to `/kos`. Workspace header shows live property name. Sidebar has "Lihat halaman publik" link. PropertyPage has inline preview link. Public hero has "Workspace →" entry point. Resolves TD-007.
+
 ---
 
 ## Current MVP Status
@@ -47,15 +50,16 @@ Room Types introduced as first-class entities owning canonical marketing data (p
 ## Active Routes
 
 ```
-/           → Raw boarding house map (admin-style, not yet redirected)
+/           → Redirects to /kos
 /login      → Login page
-/admin      → Admin workspace (protected, stub)
-/kos        → Public experience page (ET-006)
+/admin      → Admin map (protected)
+/kos        → Public experience page
+/workspace  → Workspace (protected, redirects to /workspace/dashboard)
 ```
 
 ---
 
-## Next Recommended Sprint: ET-007 — Dashboard
+## Next Recommended Sprint: ET-007 — Dashboard (or next product sprint)
 
 Build the owner dashboard that surfaced occupancy and revenue data. The underlying data (contracts, tenants, room status) is already complete; this is a pure UI/presentation sprint.
 
