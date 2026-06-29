@@ -4,6 +4,7 @@ import { isRoom, isFacility } from '@/types';
 import { useAuth } from '@/features/auth/useAuth';
 import { canAddRoom, canAddFacility } from '@/features/auth/permission';
 import { useOccupantNames } from '@/features/tenants/useOccupantNames';
+import { useUsageMode } from '@/context/UsageModeContext';
 import { resolveRoomProfile } from '@/lib/resolveRoomProfile';
 import { RoomTile } from './RoomTile';
 import { FacilityTile } from './FacilityTile';
@@ -40,6 +41,7 @@ export function GridCanvas({
   onAddRoom, onAddFacility, onRoomClick, onFacilityClick,
 }: GridCanvasProps) {
   const { role } = useAuth();
+  const usageMode = useUsageMode();
   const [overlay, setOverlay] = useState<Overlay>(null);
 
   const floorRooms = floor.objects.filter(isRoom);
@@ -179,7 +181,7 @@ export function GridCanvas({
             key={room.id}
             room={room}
             resolvedPrice={resolveRoomProfile(room, roomTypes).price}
-            occupantName={occupantNames[room.id]}
+            occupantName={usageMode === 'public' ? undefined : occupantNames[room.id]}
             style={{
               gridColumn: `${room.x + 1} / span ${room.width}`,
               gridRow: `${room.y + 1} / span ${room.height}`,
