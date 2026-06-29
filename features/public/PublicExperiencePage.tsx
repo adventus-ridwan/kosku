@@ -4,8 +4,11 @@ import { useState, useEffect } from 'react';
 import { usePropertyProfile } from '@/features/property/usePropertyProfile';
 import { UsageModeProvider } from '@/context/UsageModeContext';
 import BoardingHouseMap from '@/components/BoardingHouseMap';
-import type { RoomType, RoomAmenity } from '@/types';
+import { isRoom, type RoomType, type RoomAmenity } from '@/types';
 import type { PropertyAmenity, PropertyType } from '@/features/property/types';
+import { ProductMockup } from './ProductMockup';
+import { resolveRoomProfile } from '@/lib/resolveRoomProfile';
+import { getDummyGallery } from '@/lib/dummyGallery';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -30,58 +33,171 @@ function buildWaUrl(raw: string, propertyName: string): string {
   return `https://wa.me/${normalized}?text=${encodeURIComponent(message)}`;
 }
 
+function getSuitableFor(typeName: string): string[] {
+  const n = typeName.toLowerCase();
+  if (/premium|luxury|mewah/.test(n))                   return ['Karyawan', 'Pasangan', 'Remote Worker'];
+  if (/deluxe|exclusive|eksklusif|vip|suite/.test(n))   return ['Mahasiswa', 'Karyawan', 'Pasangan'];
+  if (/ekonom|economy|basic|dasar|hemat|murah/.test(n)) return ['Mahasiswa'];
+  return ['Mahasiswa', 'Karyawan', 'Remote Worker'];
+}
+
+// ─── Page Nav ──────────────────────────────────────────────────────────────────
+// Fixed top bar: property name left, Owner Login right.
+// Owner workspace entry lives here — out of the hero CTA cluster.
+
+function PageNav({ propertyName }: { propertyName: string }) {
+  return (
+    <nav
+      className="fixed top-0 inset-x-0 z-50 h-12 bg-slate-900/85 backdrop-blur-sm border-b border-white/[0.06]"
+      aria-label="Navigasi halaman"
+    >
+      <div className="max-w-5xl mx-auto px-6 h-full flex items-center justify-between gap-4">
+        <span className="text-sm font-semibold text-white truncate">
+          {propertyName || 'Kosku'}
+        </span>
+        <a
+          href="/workspace"
+          className="shrink-0 text-xs text-slate-500 hover:text-slate-300 transition-colors"
+        >
+          Owner Login
+        </a>
+      </div>
+    </nav>
+  );
+}
+
+// ─── Stat Block ────────────────────────────────────────────────────────────────
+
+interface StatBlockProps {
+  icon:     string;
+  value:    number;
+  label:    string;
+  accent?:  boolean;
+}
+
+function StatBlock({ icon, value, label, accent }: StatBlockProps) {
+  return (
+    <div className="flex flex-col items-center gap-1 px-4 py-3 rounded-xl bg-white/[0.06] border border-white/[0.08] min-w-[72px]">
+      <span className="text-base leading-none" aria-hidden>{icon}</span>
+      <span className={[
+        'text-[1.65rem] font-bold tabular-nums leading-none',
+        accent ? 'text-emerald-400' : 'text-white',
+      ].join(' ')}>
+        {value}
+      </span>
+      <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wide leading-none mt-0.5">
+        {label}
+      </span>
+    </div>
+  );
+}
+
 // ─── Section: Hero ─────────────────────────────────────────────────────────────
 
 interface HeroProps {
-  name:       string;
-  tagline?:   string;
-  address?:   string;
-  type?:      PropertyType;
-  waUrl?:     string;
+  name:           string;
+  tagline?:       string;
+  address?:       string;
+  type?:          PropertyType;
+  waUrl?:         string;
+  totalRooms:     number;
+  availableRooms: number;
+  floorCount:     number;
+  typeCount:      number;
+  trustSignals:   string[];
 }
 
-function HeroSection({ name, tagline, address, type, waUrl }: HeroProps) {
+function HeroSection({
+  name, tagline, address, type, waUrl,
+  totalRooms, availableRooms, floorCount, typeCount,
+  trustSignals,
+}: HeroProps) {
   return (
+    // pt-20 clears the 48px fixed nav bar + provides breathing room
     <section className="bg-slate-900 text-white">
-      <div className="max-w-3xl mx-auto px-6 pt-10 pb-20 sm:pt-12 sm:pb-28">
-        {type && (
-          <p className="text-xs font-semibold uppercase tracking-widest text-amber-400 mb-5">
-            {PROPERTY_TYPE_LABEL[type]}
-          </p>
-        )}
-        <h1 className="text-4xl sm:text-5xl font-bold tracking-tight leading-tight mb-4">
-          {name || 'Kos Kami'}
-        </h1>
-        {tagline && (
-          <p className="text-xl text-slate-300 leading-relaxed mb-8">
-            {tagline}
-          </p>
-        )}
-        {address && (
-          <p className="flex items-start gap-1.5 text-slate-400 text-sm mb-10">
-            <span className="shrink-0 mt-px">📍</span>
-            <span>{address}</span>
-          </p>
-        )}
+      <div className="max-w-5xl mx-auto px-6 pt-20 pb-24 sm:pt-24 sm:pb-28">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-10 lg:gap-16 items-center">
 
-        {/* CTA group — primary tenant action + secondary owner entry */}
-        <div className="flex flex-wrap items-center gap-3">
-          {waUrl && (
-            <a
-              href={waUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 bg-green-500 hover:bg-green-400 text-white font-semibold px-6 py-3 rounded-xl transition-colors"
-            >
-              <span>💬</span> Hubungi Owner
-            </a>
-          )}
-          <a
-            href="/workspace"
-            className="inline-flex items-center gap-2 border border-slate-700 text-slate-400 hover:border-slate-500 hover:text-slate-200 text-sm font-medium px-4 py-2.5 rounded-xl transition-colors"
-          >
-            Owner Login
-          </a>
+          {/* ── Content ─────────────────────────────────────────────────────── */}
+          <div className="lg:col-span-3">
+
+            {/* Eyebrow */}
+            {type && (
+              <p className="text-xs font-semibold uppercase tracking-widest text-amber-400 mb-5">
+                {PROPERTY_TYPE_LABEL[type]}
+              </p>
+            )}
+
+            {/* Headline */}
+            <h1 className="text-4xl sm:text-5xl font-bold tracking-tight leading-[1.08] mb-4">
+              {name || 'Kos Kami'}
+            </h1>
+
+            {/* Tagline */}
+            {tagline ? (
+              <p className="text-lg sm:text-xl text-slate-300 leading-relaxed mb-5 max-w-lg">
+                {tagline}
+              </p>
+            ) : (
+              <p className="text-base sm:text-lg text-slate-400 leading-relaxed mb-5">
+                Hunian nyaman, fasilitas lengkap.
+              </p>
+            )}
+
+            {/* Address */}
+            {address && (
+              <p className="flex items-start gap-1.5 text-slate-400 text-sm mb-7">
+                <span className="shrink-0 mt-px">📍</span>
+                <span>{address}</span>
+              </p>
+            )}
+
+            {/* Stat blocks — live counts */}
+            {totalRooms > 0 && (
+              <div className="flex flex-wrap gap-3 mb-6">
+                <StatBlock icon="🏠" value={totalRooms}     label="Kamar"    />
+                {availableRooms > 0 && (
+                  <StatBlock icon="🟢" value={availableRooms} label="Tersedia" accent />
+                )}
+                {typeCount > 0 && (
+                  <StatBlock icon="🛏" value={typeCount}      label="Tipe"     />
+                )}
+                {floorCount > 1 && (
+                  <StatBlock icon="🏢" value={floorCount}     label="Lantai"   />
+                )}
+              </div>
+            )}
+
+            {/* Trust indicators — from property amenities or sensible defaults */}
+            {trustSignals.length > 0 && (
+              <div className="flex flex-wrap gap-x-5 gap-y-2 mb-8">
+                {trustSignals.map((signal, i) => (
+                  <span key={i} className="inline-flex items-center gap-1.5 text-xs text-slate-400">
+                    <span className="text-emerald-500 font-bold leading-none">✓</span>
+                    {signal}
+                  </span>
+                ))}
+              </div>
+            )}
+
+            {/* Primary CTA — single action only */}
+            {waUrl && (
+              <a
+                href={waUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2.5 bg-green-500 hover:bg-green-400 text-white font-semibold px-7 py-3.5 rounded-xl transition-colors text-base"
+              >
+                <span>💬</span> Hubungi via WhatsApp
+              </a>
+            )}
+          </div>
+
+          {/* ── Product Mockup ──────────────────────────────────────────────── */}
+          <div className="hidden lg:block lg:col-span-2">
+            <ProductMockup />
+          </div>
+
         </div>
       </div>
     </section>
@@ -98,8 +214,8 @@ function MapSection() {
           <p className="text-xs font-semibold uppercase tracking-widest text-amber-400 mb-4">
             Denah
           </p>
-          <h2 className="text-2xl font-semibold text-white mb-2">Peta Kamar</h2>
-          <p className="text-slate-400 text-sm">
+          <h2 className="text-2xl sm:text-3xl font-semibold text-white mb-3">Peta Kamar</h2>
+          <p className="text-slate-400 text-sm sm:text-base max-w-lg">
             Klik kamar atau fasilitas untuk melihat detailnya.
           </p>
         </div>
@@ -115,10 +231,11 @@ function MapSection() {
 
 function AboutSection({ description }: { description: string }) {
   return (
-    <section id="tentang" className="bg-white py-16 px-6">
+    <section id="tentang" className="bg-white py-20 px-6">
       <div className="max-w-3xl mx-auto">
-        <h2 className="text-2xl font-semibold text-slate-900 mb-6">Tentang Kos</h2>
-        <p className="text-slate-600 leading-relaxed text-base whitespace-pre-line">
+        <p className="text-xs font-semibold uppercase tracking-widest text-amber-500 mb-4">Tentang</p>
+        <h2 className="text-2xl sm:text-3xl font-semibold text-slate-900 mb-6">Tentang Kos Ini</h2>
+        <p className="text-slate-600 leading-relaxed text-base whitespace-pre-line max-w-2xl">
           {description}
         </p>
       </div>
@@ -130,15 +247,16 @@ function AboutSection({ description }: { description: string }) {
 
 function AmenitiesSection({ amenities }: { amenities: PropertyAmenity[] }) {
   return (
-    <section id="fasilitas" className="bg-slate-50 py-16 px-6">
+    <section id="fasilitas" className="bg-slate-50 py-20 px-6">
       <div className="max-w-3xl mx-auto">
-        <h2 className="text-2xl font-semibold text-slate-900 mb-2">Fasilitas Umum</h2>
-        <p className="text-slate-500 text-sm mb-8">Tersedia untuk seluruh penghuni.</p>
+        <p className="text-xs font-semibold uppercase tracking-widest text-amber-500 mb-4">Fasilitas</p>
+        <h2 className="text-2xl sm:text-3xl font-semibold text-slate-900 mb-2">Fasilitas Umum</h2>
+        <p className="text-slate-500 text-sm sm:text-base mb-10">Tersedia untuk seluruh penghuni.</p>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
           {amenities.map(a => (
             <div
               key={a.id}
-              className="flex items-center gap-3 bg-white rounded-xl p-4 border border-slate-100 shadow-sm"
+              className="flex items-center gap-3 bg-white rounded-xl p-4 border border-slate-200 shadow-sm hover:border-amber-200 hover:shadow-md transition-all duration-200"
             >
               <span className="text-2xl leading-none">{a.icon}</span>
               <span className="text-sm font-medium text-slate-700">{a.name}</span>
@@ -152,72 +270,137 @@ function AmenitiesSection({ amenities }: { amenities: PropertyAmenity[] }) {
 
 // ─── Section: Room Types ──────────────────────────────────────────────────────
 
-function RoomTypeCard({ type, waUrl }: { type: RoomType; waUrl?: string }) {
+function RoomTypeCard({ type, waUrl, photoUrl }: { type: RoomType; waUrl?: string; photoUrl?: string }) {
+  const [imgFailed, setImgFailed] = useState(false);
   const availableAmenities: RoomAmenity[] = type.amenities.filter(a => a.available);
+  const suitableFor = getSuitableFor(type.name);
 
   return (
-    <div className="border border-slate-200 rounded-2xl p-6 hover:border-amber-200 hover:shadow-md transition-all">
-      <div className="flex items-start justify-between gap-4 mb-3">
-        <h3 className="text-lg font-semibold text-slate-900">{type.name}</h3>
-        {type.price && (
-          <div className="text-right shrink-0">
-            <p className="text-lg font-bold text-amber-600">{formatPrice(type.price)}</p>
-            <p className="text-xs text-slate-400">/ bulan</p>
+    <div className="border border-slate-200 rounded-2xl overflow-hidden bg-white shadow-sm hover:border-amber-200 hover:shadow-lg transition-all duration-200 group">
+      {/* Photo */}
+      <div className="w-full aspect-video bg-slate-100 overflow-hidden">
+        {photoUrl && !imgFailed ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={photoUrl}
+            alt={`Foto ${type.name}`}
+            className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-300"
+            onError={() => setImgFailed(true)}
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center">
+            <svg
+              width="32" height="32" viewBox="0 0 24 24" fill="none"
+              stroke="#cbd5e1" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <rect x="2" y="5" width="20" height="14" rx="2" />
+              <circle cx="12" cy="12" r="4" />
+              <path d="M7.5 5 9 3h6l1.5 2" />
+            </svg>
           </div>
         )}
       </div>
 
-      {(type.size || type.capacity) && (
-        <div className="flex flex-wrap gap-4 mb-4 text-sm text-slate-500">
-          {type.size     && <span>📐 {type.size} m²</span>}
-          {type.capacity && <span>👤 Maks. {type.capacity} orang</span>}
+      <div className="p-6">
+        {/* Name + Price */}
+        <div className="flex items-start justify-between gap-4 mb-3">
+          <h3 className="text-lg font-semibold text-slate-900">{type.name}</h3>
+          {type.price && (
+            <div className="text-right shrink-0">
+              <p className="text-xl font-bold text-amber-600">{formatPrice(type.price)}</p>
+              <p className="text-xs text-slate-400">/ bulan</p>
+            </div>
+          )}
         </div>
-      )}
 
-      {type.description && (
-        <p className="text-slate-600 text-sm leading-relaxed mb-4">
-          {type.description}
-        </p>
-      )}
+        {/* Size + Capacity */}
+        {(type.size || type.capacity) && (
+          <div className="flex flex-wrap gap-4 mb-3 text-sm text-slate-500">
+            {type.size     && <span>📐 {type.size} m²</span>}
+            {type.capacity && <span>👤 Maks. {type.capacity} orang</span>}
+          </div>
+        )}
 
-      {availableAmenities.length > 0 && (
-        <div className="flex flex-wrap gap-2 mb-4">
-          {availableAmenities.map(a => (
-            <span
-              key={a.id}
-              className="inline-flex items-center gap-1 bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-full text-xs text-slate-600"
+        {/* Description */}
+        {type.description && (
+          <p className="text-slate-600 text-sm leading-relaxed mb-4">
+            {type.description}
+          </p>
+        )}
+
+        {/* Amenities */}
+        {availableAmenities.length > 0 && (
+          <div className="flex flex-wrap gap-2 mb-5">
+            {availableAmenities.map(a => (
+              <span
+                key={a.id}
+                className="inline-flex items-center gap-1 bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-full text-xs text-slate-600"
+              >
+                {a.icon} {a.name}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {/* Cocok untuk */}
+        <div className="mb-5">
+          <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2">
+            Cocok untuk
+          </p>
+          <div className="flex flex-wrap gap-x-4 gap-y-1.5">
+            {suitableFor.map(s => (
+              <span key={s} className="flex items-center gap-1 text-xs text-slate-600">
+                <span className="text-emerald-500 font-bold">✓</span> {s}
+              </span>
+            ))}
+          </div>
+        </div>
+
+        {/* CTAs */}
+        <div className="flex flex-wrap items-center gap-3 pt-4 border-t border-slate-100">
+          <a
+            href="#peta"
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"
+          >
+            🗺️ Lihat kamar pada denah
+          </a>
+          {waUrl && (
+            <a
+              href={waUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="ml-auto inline-flex items-center gap-1.5 text-green-600 hover:text-green-500 text-sm font-medium transition-colors"
             >
-              {a.icon} {a.name}
-            </span>
-          ))}
+              💬 Tanya ketersediaan
+            </a>
+          )}
         </div>
-      )}
-
-      {waUrl && (
-        <a
-          href={waUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-1.5 text-green-600 hover:text-green-500 text-sm font-medium transition-colors"
-        >
-          <span>💬</span> Tanya ketersediaan
-        </a>
-      )}
+      </div>
     </div>
   );
 }
 
-function RoomTypesSection({ types, waUrl }: { types: RoomType[]; waUrl?: string }) {
+function RoomTypesSection({
+  types,
+  waUrl,
+  photoMap,
+}: {
+  types: RoomType[];
+  waUrl?: string;
+  photoMap: Record<string, string | undefined>;
+}) {
   return (
-    <section id="tipe-kamar" className="bg-white py-16 px-6">
+    <section id="tipe-kamar" className="bg-white py-20 px-6">
       <div className="max-w-3xl mx-auto">
-        <h2 className="text-2xl font-semibold text-slate-900 mb-2">Tipe Kamar</h2>
-        <p className="text-slate-500 text-sm mb-8">
-          Pilih tipe kamar yang sesuai dengan kebutuhanmu.
+        <p className="text-xs font-semibold uppercase tracking-widest text-amber-500 mb-4">Tipe Kamar</p>
+        <h2 className="text-2xl sm:text-3xl font-semibold text-slate-900 mb-2">Pilih Kamar yang Sesuai</h2>
+        <p className="text-slate-500 text-sm sm:text-base mb-10">
+          Semua tipe kamar dilengkapi dengan fasilitas yang tertera.
         </p>
-        <div className="flex flex-col gap-5">
+        <div className="flex flex-col gap-8">
           {types.map(rt => (
-            <RoomTypeCard key={rt.id} type={rt} waUrl={waUrl} />
+            <RoomTypeCard key={rt.id} type={rt} waUrl={waUrl} photoUrl={photoMap[rt.id]} />
           ))}
         </div>
       </div>
@@ -235,10 +418,11 @@ interface ContactProps {
 
 function ContactSection({ waUrl, phone, address }: ContactProps) {
   return (
-    <section id="kontak" className="bg-slate-900 text-white py-16 px-6">
+    <section id="kontak" className="bg-slate-900 text-white py-24 px-6">
       <div className="max-w-3xl mx-auto text-center">
-        <h2 className="text-2xl font-semibold mb-3">Tertarik Tinggal di Sini?</h2>
-        <p className="text-slate-400 text-base mb-10">
+        <p className="text-xs font-semibold uppercase tracking-widest text-amber-400 mb-4">Kontak</p>
+        <h2 className="text-2xl sm:text-3xl font-semibold mb-4">Tertarik Tinggal di Sini?</h2>
+        <p className="text-slate-400 text-base sm:text-lg mb-12 max-w-lg mx-auto leading-relaxed">
           Hubungi kami untuk informasi ketersediaan kamar dan jadwal survei.
         </p>
 
@@ -248,7 +432,7 @@ function ContactSection({ waUrl, phone, address }: ContactProps) {
               href={waUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 bg-green-500 hover:bg-green-400 text-white font-semibold px-8 py-4 rounded-xl transition-colors text-base"
+              className="inline-flex items-center gap-2 bg-green-500 hover:bg-green-400 text-white font-semibold px-8 py-3.5 rounded-xl transition-colors text-base"
             >
               <span>💬</span> Hubungi via WhatsApp
             </a>
@@ -256,7 +440,7 @@ function ContactSection({ waUrl, phone, address }: ContactProps) {
           {phone && (
             <a
               href={`tel:${phone}`}
-              className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white font-medium px-8 py-4 rounded-xl transition-colors text-base"
+              className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white font-medium px-8 py-3.5 rounded-xl transition-colors text-base"
             >
               <span>📞</span> {phone}
             </a>
@@ -264,21 +448,23 @@ function ContactSection({ waUrl, phone, address }: ContactProps) {
         </div>
 
         {!waUrl && !phone && (
-          <p className="text-slate-500 text-sm">
+          <p className="text-slate-600 text-sm mt-2">
             Informasi kontak belum tersedia.
           </p>
         )}
 
         {address && (
-          <p className="flex items-start gap-1.5 justify-center text-slate-500 text-sm mt-8">
-            <span className="shrink-0 mt-px">📍</span>
+          <p className="flex items-center gap-1.5 justify-center text-slate-500 text-sm mt-10">
+            <span aria-hidden>📍</span>
             <span>{address}</span>
           </p>
         )}
 
-        <p className="text-slate-700 text-xs mt-12">
-          Dibuat dengan Kosku
-        </p>
+        <div className="mt-16 pt-8 border-t border-white/[0.06]">
+          <p className="text-slate-600 text-xs tracking-wide">
+            Dibuat dengan <span className="text-amber-600 font-medium">Kosku</span>
+          </p>
+        </div>
       </div>
     </section>
   );
@@ -336,7 +522,18 @@ export function PublicExperiencePage() {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-900">
-        <p className="text-slate-500 text-sm">Memuat…</p>
+        <div className="flex flex-col items-center gap-3">
+          <div className="flex gap-1.5">
+            {[0, 1, 2].map(i => (
+              <div
+                key={i}
+                className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"
+                style={{ animationDelay: `${i * 150}ms` }}
+              />
+            ))}
+          </div>
+          <p className="text-slate-500 text-sm tracking-wide">Memuat…</p>
+        </div>
       </div>
     );
   }
@@ -352,14 +549,51 @@ export function PublicExperiencePage() {
   const phone   = boardingHouse.contact?.phone?.trim() || undefined;
   const address = boardingHouse.address?.full?.trim() || undefined;
 
+  // Hero stats — derived from existing data, no new business logic
+  const allRooms       = boardingHouse.floors.flatMap(f => f.objects.filter(isRoom));
+  const totalRooms     = allRooms.length;
+  const availableRooms = allRooms.filter(r => r.status === 'available').length;
+  const floorCount     = boardingHouse.floors.length;
+  const typeCount      = publishedTypes.length;
+
+  // Trust signals — use available property amenities (top 4); fall back to
+  // sensible defaults when the owner hasn't configured amenities yet.
+  const amenitySignals = (boardingHouse.amenities ?? [])
+    .filter(a => a.available)
+    .slice(0, 4)
+    .map(a => `${a.icon} ${a.name}`);
+
+  const trustSignals = amenitySignals.length >= 2
+    ? amenitySignals
+    : ['📶 WiFi Cepat', '🅿️ Parkir Tersedia', '🔒 Lingkungan Aman'];
+
+  // First photo URL per published room type — for premium cards
+  const roomTypePhotoMap: Record<string, string | undefined> = {};
+  for (const type of publishedTypes) {
+    const firstRoom = allRooms.find(r => r.roomTypeId === type.id);
+    if (firstRoom) {
+      const resolved = resolveRoomProfile(firstRoom, boardingHouse.roomTypes ?? []);
+      roomTypePhotoMap[type.id] = resolved.photos[0]?.url;
+    } else {
+      roomTypePhotoMap[type.id] = getDummyGallery(type.name)[0]?.url;
+    }
+  }
+
   return (
     <main className="scroll-smooth">
+      <PageNav propertyName={boardingHouse.name} />
+
       <HeroSection
         name={boardingHouse.name}
         tagline={boardingHouse.tagline?.trim() || undefined}
         address={address}
         type={boardingHouse.type}
         waUrl={waUrl}
+        totalRooms={totalRooms}
+        availableRooms={availableRooms}
+        floorCount={floorCount}
+        typeCount={typeCount}
+        trustSignals={trustSignals}
       />
 
       <MapSection />
@@ -373,7 +607,7 @@ export function PublicExperiencePage() {
       )}
 
       {publishedTypes.length > 0 && (
-        <RoomTypesSection types={publishedTypes} waUrl={waUrl} />
+        <RoomTypesSection types={publishedTypes} waUrl={waUrl} photoMap={roomTypePhotoMap} />
       )}
 
       <ContactSection waUrl={waUrl} phone={phone} address={address} />

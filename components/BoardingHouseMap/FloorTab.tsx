@@ -8,7 +8,7 @@ interface FloorTabProps {
 
 export function FloorTab({ floors, activeFloorId, onSelect }: FloorTabProps) {
   return (
-    <div className="flex gap-1 border-b border-gray-200 mb-5">
+    <div className="flex gap-1 border-b border-slate-200 mb-5">
       {floors.map(floor => {
         const isActive = floor.id === activeFloorId;
         return (
@@ -19,8 +19,8 @@ export function FloorTab({ floors, activeFloorId, onSelect }: FloorTabProps) {
             className={[
               'px-4 py-2 text-sm font-medium rounded-t-md border-b-2 -mb-px transition-colors',
               isActive
-                ? 'border-blue-500 text-blue-600 bg-white'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50',
+                ? 'border-amber-500 text-amber-700 bg-white'
+                : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50',
             ].join(' ')}
           >
             {floor.name}

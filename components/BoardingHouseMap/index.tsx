@@ -17,11 +17,11 @@ export default function BoardingHouseMap() {
   if (!activeFloor) return null;
 
   const { boardingHouse } = state;
-  // Public mode is always read-only. Admin mode is always edit — the toggle has been removed.
   const effectiveMode = usageMode === 'public' ? 'view' : 'edit';
+  const waPhone = boardingHouse.contact?.whatsapp?.trim() || undefined;
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
+    <div className={['flex flex-col bg-slate-100', usageMode !== 'public' ? 'min-h-screen' : ''].join(' ')}>
       <div className="flex-1 overflow-auto px-6 py-5">
         <FloorTab
           floors={boardingHouse.floors}
@@ -38,6 +38,8 @@ export default function BoardingHouseMap() {
           onAddFacility={actions.addFacility}
           onRoomClick={actions.selectObject}
           onFacilityClick={actions.selectObject}
+          onMoveRoom={actions.moveRoom}
+          onMoveFacility={(floorId, facility) => actions.updateFacility(floorId, facility)}
         />
       </div>
 
@@ -53,6 +55,7 @@ export default function BoardingHouseMap() {
         onSave={actions.updateRoom}
         onDelete={actions.deleteRoom}
         onClose={actions.deselectObject}
+        waPhone={waPhone}
       />
       <FacilityDrawer
         facility={selectedFacility}

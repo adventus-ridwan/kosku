@@ -20,8 +20,8 @@ export function FacilityTile({ facility, style, onClick }: FacilityTileProps) {
       }}
       onClick={onClick}
       className={[
-        'border-2 rounded-lg m-1 flex flex-col items-center justify-center gap-1 overflow-hidden',
-        onClick ? 'cursor-pointer hover:brightness-95 transition-[filter]' : '',
+        'border-2 rounded-lg m-1 flex flex-col items-center justify-center gap-1 overflow-hidden shadow-sm',
+        onClick ? 'cursor-pointer hover:brightness-[0.93] hover:shadow-md transition-all duration-150' : '',
       ].join(' ')}
     >
       <span className="text-2xl leading-none select-none">{facility.icon || cfg.icon}</span>

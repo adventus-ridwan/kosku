@@ -53,6 +53,14 @@ interface RoomDrawerProps {
   onSave: (floorId: string, room: Room) => void;
   onDelete: (floorId: string, roomId: string) => void;
   onClose: () => void;
+  waPhone?: string;       // raw WA number for public-mode CTA
+}
+
+function buildRoomWaUrl(rawPhone: string, roomName: string): string {
+  const digits = rawPhone.replace(/\D/g, '');
+  const normalized = digits.startsWith('0') ? '62' + digits.slice(1) : digits;
+  const message = `Halo, saya tertarik dengan kamar ${roomName}. Apakah kamar ini masih tersedia?`;
+  return `https://wa.me/${normalized}?text=${encodeURIComponent(message)}`;
 }
 
 // ─── Component ───────────────────────────────────────────────────────────────
@@ -66,6 +74,7 @@ export function RoomDrawer({
   onSave,
   onDelete,
   onClose,
+  waPhone,
 }: RoomDrawerProps) {
   const { role } = useAuth();
   const usageMode = useUsageMode();
@@ -601,15 +610,27 @@ export function RoomDrawer({
         {/* ── Footer (sticky) ── */}
         <footer className="shrink-0 border-t border-gray-100 px-5 py-4">
 
-          {/* View mode — single close button */}
+          {/* View mode — WA CTA (public) + close */}
           {activeTab === 'information' && mode === 'view' && (
-            <button
-              type="button"
-              onClick={handleClose}
-              className="w-full border border-gray-200 text-gray-700 text-sm font-medium py-2 rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              Tutup
-            </button>
+            <div className="flex flex-col gap-2">
+              {waPhone && localRoom && (
+                <a
+                  href={buildRoomWaUrl(waPhone, localRoom.name)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full inline-flex items-center justify-center gap-2 bg-green-500 hover:bg-green-400 text-white font-semibold py-2.5 rounded-lg transition-colors text-sm"
+                >
+                  💬 Tanya Ketersediaan
+                </a>
+              )}
+              <button
+                type="button"
+                onClick={handleClose}
+                className="w-full border border-gray-200 text-gray-700 text-sm font-medium py-2 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                Tutup
+              </button>
+            </div>
           )}
 
           {/* Edit mode — save / delete / cancel */}

@@ -100,8 +100,8 @@ export function RoomTile({
         onMouseLeave={handleMouseLeave}
         className={[
           cfg.bg, cfg.border, cfg.text,
-          'border-2 rounded-lg m-1 p-2.5 flex flex-col gap-1 overflow-hidden',
-          onClick ? 'cursor-pointer hover:brightness-95 transition-[filter]' : '',
+          'border-2 rounded-lg m-1 p-2.5 flex flex-col gap-1 overflow-hidden shadow-sm',
+          onClick ? 'cursor-pointer hover:brightness-[0.93] hover:shadow-md transition-all duration-150' : '',
         ].join(' ')}
       >
         <div className="flex items-start justify-between gap-1">
