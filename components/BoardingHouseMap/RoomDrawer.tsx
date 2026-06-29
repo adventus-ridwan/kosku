@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useLayoutEffect } from 'react';
-import type { Room, RoomStatus, AppMode } from '@/types';
+import type { Room, RoomStatus, AppMode, RoomType } from '@/types';
 import { useAuth } from '@/features/auth/useAuth';
+import { resolveRoomProfile } from '@/lib/resolveRoomProfile';
 import { useUsageMode } from '@/context/UsageModeContext';
 import { canDeleteRoom, canEditRoom, canViewTenantInfo, canViewContractHistory } from '@/features/auth/permission';
 import { TenantTab } from '@/features/tenants/TenantTab';
@@ -43,6 +44,7 @@ interface RoomDrawerProps {
   room: Room | null;      // null → drawer is hidden
   floorId: string;
   floorRooms: Room[];     // needed for uniqueness validation on save
+  roomTypes: RoomType[];  // for resolving inherited price in view mode
   mode: AppMode;
   onSave: (floorId: string, room: Room) => void;
   onDelete: (floorId: string, roomId: string) => void;
@@ -55,6 +57,7 @@ export function RoomDrawer({
   room,
   floorId,
   floorRooms,
+  roomTypes,
   mode,
   onSave,
   onDelete,
@@ -143,7 +146,7 @@ export function RoomDrawer({
       return;
     }
 
-    onSave(floorId, { ...localRoom, name: trimmed, price: Math.max(0, localRoom.price) });
+    onSave(floorId, { ...localRoom, name: trimmed });
     onClose();
   }
 
@@ -171,14 +174,14 @@ export function RoomDrawer({
     onSave(floorId, { ...room, status: 'available' });
   }
 
-  const formattedPrice =
-    localRoom && localRoom.price > 0
-      ? new Intl.NumberFormat('id-ID', {
-          style: 'currency',
-          currency: 'IDR',
-          maximumFractionDigits: 0,
-        }).format(localRoom.price)
-      : '—';
+  const resolvedPrice = localRoom ? resolveRoomProfile(localRoom, roomTypes).price : undefined;
+  const formattedPrice = resolvedPrice
+    ? new Intl.NumberFormat('id-ID', {
+        style: 'currency',
+        currency: 'IDR',
+        maximumFractionDigits: 0,
+      }).format(resolvedPrice)
+    : '—';
 
   // ─── Render ────────────────────────────────────────────────────────────────
 
@@ -282,7 +285,7 @@ export function RoomDrawer({
         )}
 
         {/* ── Body (scrollable) ── */}
-        <div className="flex-1 overflow-y-auto px-5 py-5">
+        <div className="flex-1 min-h-0 overflow-y-auto px-5 py-5">
 
           {/* View mode — read-only description list */}
           {activeTab === 'information' && localRoom && mode === 'view' && (
@@ -375,18 +378,28 @@ export function RoomDrawer({
                 )}
               </div>
 
-              {/* Harga */}
+              {/* Harga Override */}
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">
-                  Harga / Bulan (Rp)
+                  Harga Override (Rp)
+                  {!localRoom.priceOverride && resolvedPrice && (
+                    <span className="ml-1.5 text-purple-600 font-normal text-[10px]">dari tipe</span>
+                  )}
                 </label>
                 <input
                   type="number"
-                  value={localRoom.price}
-                  onChange={e => update('price', Math.max(0, Number(e.target.value) || 0))}
+                  value={localRoom.priceOverride ?? ''}
+                  onChange={e => {
+                    const val = Number(e.target.value);
+                    update('priceOverride', e.target.value !== '' && val > 0 ? val : undefined);
+                  }}
                   min={0}
+                  placeholder={resolvedPrice ? String(resolvedPrice) : 'Belum diset'}
                   className={FIELD}
                 />
+                {!localRoom.priceOverride && !resolvedPrice && (
+                  <p className="text-xs text-gray-400 mt-0.5">Kosongkan untuk mewarisi dari tipe kamar</p>
+                )}
               </div>
 
               {/* Catatan */}

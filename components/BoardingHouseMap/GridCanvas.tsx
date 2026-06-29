@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import type { Floor, Room, Facility, RoomStatus, AppMode } from '@/types';
+import type { Floor, Room, Facility, RoomStatus, AppMode, RoomType } from '@/types';
 import { isRoom, isFacility } from '@/types';
 import { useAuth } from '@/features/auth/useAuth';
 import { canAddRoom, canAddFacility } from '@/features/auth/permission';
 import { useOccupantNames } from '@/features/tenants/useOccupantNames';
+import { resolveRoomProfile } from '@/lib/resolveRoomProfile';
 import { RoomTile } from './RoomTile';
 import { FacilityTile } from './FacilityTile';
 import { AddRoomOverlay } from './AddRoomOverlay';
@@ -26,6 +27,7 @@ interface GridCanvasProps {
   floor: Floor;
   gridCols: number;
   gridRows: number;
+  roomTypes: RoomType[];
   mode: AppMode;
   onAddRoom: (floorId: string, roomData: Omit<Room, 'id'>) => void;
   onAddFacility: (floorId: string, facilityData: Omit<Facility, 'id'>) => void;
@@ -34,7 +36,7 @@ interface GridCanvasProps {
 }
 
 export function GridCanvas({
-  floor, gridCols, gridRows, mode,
+  floor, gridCols, gridRows, roomTypes, mode,
   onAddRoom, onAddFacility, onRoomClick, onFacilityClick,
 }: GridCanvasProps) {
   const { role } = useAuth();
@@ -72,12 +74,12 @@ export function GridCanvas({
     setOverlay({ kind: 'menu', x, y, rect });
   }
 
-  function handleRoomConfirm(name: string, price: number) {
+  function handleRoomConfirm(name: string, priceOverride?: number) {
     if (!canAddRoom(role)) return;
     if (!overlay || overlay.kind !== 'add-room') return;
     onAddRoom(floor.id, {
       kind: 'room',
-      name, price,
+      name, priceOverride,
       x: overlay.x, y: overlay.y,
       width: 1, height: 1,
       status: 'available', occupant: '', notes: '',
@@ -176,6 +178,7 @@ export function GridCanvas({
           <RoomTile
             key={room.id}
             room={room}
+            resolvedPrice={resolveRoomProfile(room, roomTypes).price}
             occupantName={occupantNames[room.id]}
             style={{
               gridColumn: `${room.x + 1} / span ${room.width}`,
@@ -236,7 +239,6 @@ export function GridCanvas({
       )}
       {overlay?.kind === 'add-facility' && (
         <AddFacilityOverlay
-          anchorRect={overlay.rect}
           cell={{ x: overlay.x, y: overlay.y }}
           occupiedCells={occupiedCells}
           gridCols={gridCols}

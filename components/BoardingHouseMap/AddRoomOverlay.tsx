@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 interface AddRoomOverlayProps {
   existingNames: string[];
   anchorRect: DOMRect;
-  onConfirm: (name: string, price: number) => void;
+  onConfirm: (name: string, priceOverride?: number) => void;
   onCancel: () => void;
 }
 
@@ -58,9 +58,11 @@ export function AddRoomOverlay({
 
   function handleSubmit() {
     if (!validate()) return;
-    // Parse the raw string to a number; treat blank as 0, guard NaN.
-    const price = priceStr === '' ? 0 : Math.max(0, Number(priceStr) || 0);
-    onConfirm(name.trim(), price);
+    // Only set priceOverride when the owner enters a value > 0.
+    // Leaving the field blank means the room will inherit price from its type.
+    const parsed = Number(priceStr);
+    const priceOverride = priceStr !== '' && parsed > 0 ? parsed : undefined;
+    onConfirm(name.trim(), priceOverride);
   }
 
   function handleKeyDown(e: React.KeyboardEvent) {
@@ -107,7 +109,7 @@ export function AddRoomOverlay({
 
         <div>
           <label className="block text-xs font-medium text-gray-600 mb-1">
-            Harga / Bulan (Rp)
+            Harga Override (Rp) <span className="text-gray-400 font-normal">— opsional</span>
           </label>
           <input
             type="number"

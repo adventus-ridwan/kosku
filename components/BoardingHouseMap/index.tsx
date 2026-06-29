@@ -38,6 +38,7 @@ export default function BoardingHouseMap() {
           floor={activeFloor}
           gridCols={boardingHouse.gridCols}
           gridRows={boardingHouse.gridRows}
+          roomTypes={boardingHouse.roomTypes ?? []}
           mode={effectiveMode}
           onAddRoom={actions.addRoom}
           onAddFacility={actions.addFacility}
@@ -53,6 +54,7 @@ export default function BoardingHouseMap() {
         room={selectedRoom}
         floorId={activeFloor.id}
         floorRooms={activeFloor.objects.filter(isRoom)}
+        roomTypes={boardingHouse.roomTypes ?? []}
         mode={effectiveMode}
         onSave={actions.updateRoom}
         onDelete={actions.deleteRoom}

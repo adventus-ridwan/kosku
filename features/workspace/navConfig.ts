@@ -8,10 +8,11 @@ export interface NavItem {
 }
 
 export const NAV_ITEMS: NavItem[] = [
-  { label: 'Dashboard',  href: '/workspace/dashboard',  icon: '📊' },
-  { label: 'Properti',   href: '/workspace/property',   icon: '🏠' },
-  { label: 'Kamar',      href: '/workspace/rooms',      icon: '🚪' },
-  { label: 'Penghuni',   href: '/workspace/tenants',    icon: '👤' },
-  { label: 'Kontrak',    href: '/workspace/contracts',  icon: '📋' },
-  { label: 'Pengaturan', href: '/workspace/settings',   icon: '⚙️' },
+  { label: 'Dashboard',   href: '/workspace/dashboard',   icon: '📊' },
+  { label: 'Properti',    href: '/workspace/property',    icon: '🏠' },
+  { label: 'Kamar',       href: '/workspace/rooms',       icon: '🚪' },
+  { label: 'Tipe Kamar',  href: '/workspace/room-types',  icon: '🏷️' },
+  { label: 'Penghuni',    href: '/workspace/tenants',     icon: '👤' },
+  { label: 'Kontrak',     href: '/workspace/contracts',   icon: '📋' },
+  { label: 'Pengaturan',  href: '/workspace/settings',    icon: '⚙️' },
 ];

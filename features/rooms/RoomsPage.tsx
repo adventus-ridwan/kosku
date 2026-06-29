@@ -1,9 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import type { RoomStatus } from '@/types';
+import type { RoomStatus, RoomType } from '@/types';
 import type { FlatRoom } from './useRooms';
 import { useRooms } from './useRooms';
+import { resolveRoomProfile } from '@/lib/resolveRoomProfile';
 import { RoomPanel } from './RoomPanel';
 
 const STATUS_LABEL: Record<RoomStatus, string> = {
@@ -27,7 +28,7 @@ function formatPrice(price: number): string {
 }
 
 export function RoomsPage() {
-  const { allRooms, isLoading, updateRoom } = useRooms();
+  const { allRooms, isLoading, updateRoom, roomTypes } = useRooms();
   const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
 
   const selectedFlatRoom: FlatRoom | null = selectedRoomId
@@ -58,6 +59,7 @@ export function RoomsPage() {
                   <RoomListItem
                     key={flatRoom.room.id}
                     flatRoom={flatRoom}
+                    roomTypes={roomTypes}
                     isSelected={flatRoom.room.id === selectedRoomId}
                     onClick={() => setSelectedRoomId(flatRoom.room.id)}
                   />
@@ -70,6 +72,7 @@ export function RoomsPage() {
 
       <RoomPanel
         selectedRoom={selectedFlatRoom}
+        roomTypes={roomTypes}
         onClose={() => setSelectedRoomId(null)}
         onSave={(roomId, patch) => updateRoom(roomId, patch)}
       />
@@ -79,13 +82,16 @@ export function RoomsPage() {
 
 interface RoomListItemProps {
   flatRoom:   FlatRoom;
+  roomTypes:  RoomType[];
   isSelected: boolean;
   onClick:    () => void;
 }
 
-function RoomListItem({ flatRoom, isSelected, onClick }: RoomListItemProps) {
+function RoomListItem({ flatRoom, roomTypes, isSelected, onClick }: RoomListItemProps) {
   const { room, floorName } = flatRoom;
-  const publishStatus = room.publishStatus ?? 'draft';
+  const resolved = resolveRoomProfile(room, roomTypes);
+  const publishStatus = resolved.publishStatus;
+  const typeName = resolved.typeName;
 
   return (
     <button
@@ -101,7 +107,12 @@ function RoomListItem({ flatRoom, isSelected, onClick }: RoomListItemProps) {
       <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium shrink-0 ${STATUS_BADGE[room.status]}`}>
         {STATUS_LABEL[room.status]}
       </span>
-      <span className="text-sm text-gray-600 flex-1">{formatPrice(room.price)}</span>
+      <span className="text-sm text-gray-600 flex-1">{resolved.price ? formatPrice(resolved.price) : '—'}</span>
+      {typeName && (
+        <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-purple-50 text-purple-600 shrink-0 max-w-[100px] truncate">
+          {typeName}
+        </span>
+      )}
       <span
         className={[
           'inline-flex px-2 py-0.5 rounded-full text-xs font-medium shrink-0',

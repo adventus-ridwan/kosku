@@ -1,19 +1,20 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import type { Room } from '@/types';
+import type { Room, RoomType } from '@/types';
 import type { FlatRoom } from './useRooms';
 import { useAuth } from '@/features/auth/useAuth';
 import { canEditRoom, canPublishRoom } from '@/features/auth/permission';
-import { DEFAULT_ROOM_AMENITIES } from './defaults';
+import { resolveRoomProfile } from '@/lib/resolveRoomProfile';
 import { RoomBasicSection } from './sections/RoomBasicSection';
 import { RoomAmenitiesSection } from './sections/RoomAmenitiesSection';
 import { RoomPublishSection } from './sections/RoomPublishSection';
 
-type RoomProfilePatch = Partial<Pick<Room, 'description' | 'size' | 'capacity' | 'publishStatus' | 'roomAmenities'>>;
+type RoomProfilePatch = Partial<Pick<Room, 'description' | 'size' | 'capacity' | 'publishStatus' | 'roomAmenities' | 'roomTypeId' | 'priceOverride'>>;
 
 interface RoomPanelProps {
   selectedRoom: FlatRoom | null;
+  roomTypes:    RoomType[];
   onClose:      () => void;
   onSave:       (roomId: string, patch: RoomProfilePatch) => void;
 }
@@ -33,7 +34,7 @@ const STATUS_BADGE: Record<string, string> = {
 const sectionClass = 'bg-gray-50 rounded-xl border border-gray-200 p-5 flex flex-col gap-4';
 const sectionTitleClass = 'text-sm font-semibold text-gray-900';
 
-export function RoomPanel({ selectedRoom, onClose, onSave }: RoomPanelProps) {
+export function RoomPanel({ selectedRoom, roomTypes, onClose, onSave }: RoomPanelProps) {
   const { role } = useAuth();
   const isOpen = selectedRoom !== null;
 
@@ -73,6 +74,8 @@ export function RoomPanel({ selectedRoom, onClose, onSave }: RoomPanelProps) {
   function handleSave() {
     if (!draft || !selectedRoom) return;
     onSave(draft.id, {
+      roomTypeId:    draft.roomTypeId,
+      priceOverride: draft.priceOverride,
       description:   draft.description,
       size:          draft.size,
       capacity:      draft.capacity,
@@ -138,9 +141,94 @@ export function RoomPanel({ selectedRoom, onClose, onSave }: RoomPanelProps) {
             </div>
 
             {/* Scrollable body */}
-            <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-5">
+            <div className="flex-1 min-h-0 overflow-y-auto p-5 flex flex-col gap-5">
+
+              {/* ── Type assignment ── */}
+              {roomTypes.length > 0 && (
+                <section className={sectionClass}>
+                  <h2 className={sectionTitleClass}>Tipe Kamar</h2>
+                  <select
+                    value={draft.roomTypeId ?? ''}
+                    onChange={e => patchDraft({ roomTypeId: e.target.value || undefined })}
+                    disabled={!canEdit}
+                    className={[
+                      'w-full border border-gray-200 rounded-md px-3 py-2 text-sm text-gray-900',
+                      'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent',
+                      'disabled:bg-gray-50 disabled:text-gray-400',
+                    ].join(' ')}
+                  >
+                    <option value="">— Tanpa tipe —</option>
+                    {roomTypes.map(rt => (
+                      <option key={rt.id} value={rt.id}>{rt.name}</option>
+                    ))}
+                  </select>
+                  {draft.roomTypeId && (() => {
+                    const resolved = resolveRoomProfile(draft, roomTypes);
+                    return resolved.typeName ? (
+                      <p className="text-xs text-blue-500">
+                        Kamar ini mewarisi profil dari tipe &quot;{resolved.typeName}&quot;.
+                      </p>
+                    ) : null;
+                  })()}
+                </section>
+              )}
+
+              {/* ── Price override ── */}
               <section className={sectionClass}>
-                <h2 className={sectionTitleClass}>Deskripsi &amp; Ukuran</h2>
+                <div className="flex items-center justify-between gap-2">
+                  <h2 className={sectionTitleClass}>Harga / Bulan</h2>
+                  {(() => {
+                    const rt = draft.roomTypeId ? roomTypes.find(t => t.id === draft.roomTypeId) : null;
+                    const isInheriting = !draft.priceOverride && !!rt?.price;
+                    return isInheriting ? (
+                      <span className="text-[10px] font-medium text-blue-500 bg-blue-50 px-1.5 py-0.5 rounded shrink-0">
+                        Dari tipe
+                      </span>
+                    ) : null;
+                  })()}
+                </div>
+                {(() => {
+                  const resolved = resolveRoomProfile(draft, roomTypes);
+                  return (
+                    <div>
+                      <input
+                        type="number"
+                        value={draft.priceOverride ?? ''}
+                        onChange={e => {
+                          const val = Number(e.target.value);
+                          patchDraft({ priceOverride: e.target.value !== '' && val > 0 ? val : undefined });
+                        }}
+                        min={0}
+                        placeholder={resolved.price ? String(resolved.price) : 'Warisi dari tipe'}
+                        disabled={!canEdit}
+                        className={[
+                          'w-full border border-gray-200 rounded-md px-3 py-2 text-sm text-gray-900',
+                          'placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500',
+                          'focus:border-transparent disabled:bg-gray-50 disabled:text-gray-400',
+                        ].join(' ')}
+                      />
+                      {!draft.priceOverride && !resolved.price && (
+                        <p className="text-xs text-gray-400 mt-1">Kosongkan untuk mewarisi dari tipe kamar</p>
+                      )}
+                    </div>
+                  );
+                })()}
+              </section>
+
+              {/* ── Description & sizing ── */}
+              <section className={sectionClass}>
+                <div className="flex items-center justify-between gap-2">
+                  <h2 className={sectionTitleClass}>Deskripsi &amp; Ukuran</h2>
+                  {(() => {
+                    const rt = draft.roomTypeId ? roomTypes.find(t => t.id === draft.roomTypeId) : null;
+                    const isInheriting = !draft.description?.trim() && !!rt?.description;
+                    return isInheriting ? (
+                      <span className="text-[10px] font-medium text-blue-500 bg-blue-50 px-1.5 py-0.5 rounded shrink-0">
+                        Dari tipe
+                      </span>
+                    ) : null;
+                  })()}
+                </div>
                 <RoomBasicSection
                   value={{
                     description: draft.description ?? '',
@@ -152,19 +240,43 @@ export function RoomPanel({ selectedRoom, onClose, onSave }: RoomPanelProps) {
                 />
               </section>
 
+              {/* ── Amenities ── */}
               <section className={sectionClass}>
-                <h2 className={sectionTitleClass}>Fasilitas Kamar</h2>
+                <div className="flex items-center justify-between gap-2">
+                  <h2 className={sectionTitleClass}>Fasilitas Kamar</h2>
+                  {(() => {
+                    const rt = draft.roomTypeId ? roomTypes.find(t => t.id === draft.roomTypeId) : null;
+                    const isInheriting = !draft.roomAmenities?.length && !!rt;
+                    return isInheriting ? (
+                      <span className="text-[10px] font-medium text-blue-500 bg-blue-50 px-1.5 py-0.5 rounded shrink-0">
+                        Dari tipe
+                      </span>
+                    ) : null;
+                  })()}
+                </div>
                 <RoomAmenitiesSection
-                  value={draft.roomAmenities ?? DEFAULT_ROOM_AMENITIES}
+                  value={resolveRoomProfile(draft, roomTypes).amenities}
                   onChange={amenities => patchDraft({ roomAmenities: amenities })}
                   disabled={!canEdit}
                 />
               </section>
 
+              {/* ── Publish status ── */}
               <section className={sectionClass}>
-                <h2 className={sectionTitleClass}>Status Publikasi</h2>
+                <div className="flex items-center justify-between gap-2">
+                  <h2 className={sectionTitleClass}>Status Publikasi</h2>
+                  {(() => {
+                    const rt = draft.roomTypeId ? roomTypes.find(t => t.id === draft.roomTypeId) : null;
+                    const isInheriting = !draft.publishStatus && !!rt?.publishStatus;
+                    return isInheriting ? (
+                      <span className="text-[10px] font-medium text-blue-500 bg-blue-50 px-1.5 py-0.5 rounded shrink-0">
+                        Dari tipe
+                      </span>
+                    ) : null;
+                  })()}
+                </div>
                 <RoomPublishSection
-                  value={draft.publishStatus ?? 'draft'}
+                  value={resolveRoomProfile(draft, roomTypes).publishStatus}
                   onChange={v => patchDraft({ publishStatus: v })}
                   disabled={!canPublish}
                 />

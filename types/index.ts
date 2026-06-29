@@ -25,6 +25,29 @@ export type {
 
 export type RoomStatus = 'available' | 'occupied' | 'maintenance';
 
+// Photo placeholder — shape to be finalized in the gallery sprint
+export interface RoomTypePhoto {
+  id:         string;
+  url:        string;
+  caption?:   string;
+  sortOrder?: number;
+}
+
+// Room Type: a reusable profile template that individual rooms may inherit from
+export interface RoomType {
+  id:            string;
+  name:          string;
+  description:   string;
+  amenities:     RoomAmenity[];
+  photos:        RoomTypePhoto[];  // always [], reserved for gallery sprint
+  size?:         number;           // sq meters
+  capacity?:     number;           // max occupants
+  price?:        number;           // canonical monthly rent in IDR; rooms inherit unless overriding
+  publishStatus: PublishStatus;
+  sortOrder?:    number;           // display order in workspace and public experience
+  // amenitiesMode?: 'inherit' | 'replace' | 'append'  — reserved, not implemented in ET-005
+}
+
 export interface Room {
   kind: 'room';
   id: string;
@@ -35,16 +58,17 @@ export interface Room {
   height: number;  // rows spanned (usually 1)
   status: RoomStatus;
   occupant: string;
-  price: number;   // monthly rent in IDR
   notes: string;
 
-  // Profile fields (ET-003) — marketing data, managed in workspace RoomPanel
-  // Operational data (status, price, tenant, contract) stays in the map RoomDrawer
-  publishStatus?: PublishStatus;
-  description?:   string;
-  size?:          number;   // sq meters
-  capacity?:      number;   // max occupants
-  roomAmenities?: RoomAmenity[];
+  // Profile fields — marketing data, managed in workspace RoomPanel.
+  // undefined on any field means "inherit from roomType"; set means "explicit override".
+  roomTypeId?:     string;          // optional ref to RoomType
+  priceOverride?:  number;          // set only when this room's price differs from its type
+  publishStatus?:  PublishStatus;
+  description?:    string;
+  size?:           number;   // sq meters
+  capacity?:       number;   // max occupants
+  roomAmenities?:  RoomAmenity[];
 }
 
 // 'gate' is entrance/exit; 'hallway' is intentionally absent — use POI for corridors
@@ -115,6 +139,7 @@ export interface BoardingHouse {
   gridCols: number;
   gridRows: number;
   floors: Floor[];
+  roomTypes?: RoomType[];  // ET-005 — room type templates; optional for backwards compatibility
 
   // Profile fields (ET-002) — all optional so existing code compiles unchanged
   tagline?:     string;
@@ -125,6 +150,10 @@ export interface BoardingHouse {
   amenities?:   PropertyAmenity[];
   rules?:       PropertyRule[];
   gallery?:     PropertyGalleryConfig;
+
+  // Storage schema version — used to run one-time data migrations in loadFromStorage.
+  // Absent in old data → treated as version 1. Always present in data written by v2+.
+  schemaVersion?: number;
 }
 
 export type AppMode = 'view' | 'edit';

@@ -29,21 +29,22 @@ const STATUS_CONFIG: Record<
 
 interface RoomTileProps {
   room: Room;
+  resolvedPrice?: number;
   occupantName?: string;
   style?: React.CSSProperties;
   onClick?: () => void;
 }
 
-export function RoomTile({ room, occupantName, style, onClick }: RoomTileProps) {
+export function RoomTile({ room, resolvedPrice, occupantName, style, onClick }: RoomTileProps) {
   const cfg = STATUS_CONFIG[room.status];
 
   const formattedPrice =
-    room.price > 0
+    resolvedPrice && resolvedPrice > 0
       ? new Intl.NumberFormat('id-ID', {
           style: 'currency',
           currency: 'IDR',
           maximumFractionDigits: 0,
-        }).format(room.price)
+        }).format(resolvedPrice)
       : null;
 
   return (

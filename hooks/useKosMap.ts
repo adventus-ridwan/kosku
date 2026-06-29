@@ -10,6 +10,7 @@ import type {
   Facility,
   MapObject,
   BoardingHouse,
+  RoomType,
 } from '@/types';
 import { isRoom, isFacility } from '@/types';
 import { defaultBoardingHouse } from '@/lib/defaults';
@@ -37,7 +38,10 @@ type KosAction =
   | { type: 'ADD_FACILITY'; payload: { floorId: string; facility: Facility } }
   | { type: 'UPDATE_FACILITY'; payload: { floorId: string; facility: Facility } }
   | { type: 'DELETE_FACILITY'; payload: { floorId: string; facilityId: string } }
-  | { type: 'SET_DRAG_STATE'; payload: DragState | null };
+  | { type: 'SET_DRAG_STATE'; payload: DragState | null }
+  | { type: 'ADD_ROOM_TYPE';    payload: RoomType }
+  | { type: 'UPDATE_ROOM_TYPE'; payload: RoomType }
+  | { type: 'DELETE_ROOM_TYPE'; payload: string };  // id — blocked if any room references it
 
 // ---------------------------------------------------------------------------
 // State initializer — reads workspace session so mode + floor survive refresh
@@ -293,6 +297,40 @@ function reducer(state: AppState, action: KosAction): AppState {
     case 'SET_DRAG_STATE':
       return { ...state, dragState: action.payload };
 
+    case 'ADD_ROOM_TYPE':
+      return {
+        ...state,
+        boardingHouse: {
+          ...state.boardingHouse,
+          roomTypes: [...(state.boardingHouse.roomTypes ?? []), action.payload],
+        },
+      };
+
+    case 'UPDATE_ROOM_TYPE':
+      return {
+        ...state,
+        boardingHouse: {
+          ...state.boardingHouse,
+          roomTypes: (state.boardingHouse.roomTypes ?? []).map(t =>
+            t.id === action.payload.id ? action.payload : t,
+          ),
+        },
+      };
+
+    case 'DELETE_ROOM_TYPE': {
+      const isReferenced = state.boardingHouse.floors.some(f =>
+        f.objects.filter(isRoom).some(r => r.roomTypeId === action.payload),
+      );
+      if (isReferenced) return state; // AC-13: blocked — UI must show an error
+      return {
+        ...state,
+        boardingHouse: {
+          ...state.boardingHouse,
+          roomTypes: (state.boardingHouse.roomTypes ?? []).filter(t => t.id !== action.payload),
+        },
+      };
+    }
+
     default:
       return state;
   }
@@ -393,6 +431,15 @@ export function useKosMap() {
 
     setDragState: (dragState: DragState | null) =>
       dispatch({ type: 'SET_DRAG_STATE', payload: dragState }),
+
+    addRoomType: (data: Omit<RoomType, 'id'>) =>
+      dispatch({ type: 'ADD_ROOM_TYPE', payload: { ...data, id: crypto.randomUUID() } }),
+
+    updateRoomType: (roomType: RoomType) =>
+      dispatch({ type: 'UPDATE_ROOM_TYPE', payload: roomType }),
+
+    deleteRoomType: (id: string) =>
+      dispatch({ type: 'DELETE_ROOM_TYPE', payload: id }),
   };
 
   // ---------------------------------------------------------------------------

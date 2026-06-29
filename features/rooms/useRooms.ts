@@ -13,7 +13,7 @@ export interface FlatRoom {
 }
 
 // Profile fields only — prevents passing operational fields through the profile save path
-type RoomProfilePatch = Partial<Pick<Room, 'description' | 'size' | 'capacity' | 'publishStatus' | 'roomAmenities'>>;
+type RoomProfilePatch = Partial<Pick<Room, 'description' | 'size' | 'capacity' | 'publishStatus' | 'roomAmenities' | 'roomTypeId' | 'priceOverride'>>;
 
 interface RoomsState {
   boardingHouse: BoardingHouse;
@@ -69,5 +69,7 @@ export function useRooms() {
     dispatch({ type: 'SAVE', payload: updated });
   }
 
-  return { allRooms, isLoading, updateRoom };
+  const roomTypes = boardingHouse.roomTypes ?? [];
+
+  return { allRooms, isLoading, updateRoom, roomTypes };
 }

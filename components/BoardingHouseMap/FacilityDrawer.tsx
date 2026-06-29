@@ -177,7 +177,7 @@ export function FacilityDrawer({
         </header>
 
         {/* ── Body (scrollable) ── */}
-        <div className="flex-1 overflow-y-auto px-5 py-5">
+        <div className="flex-1 min-h-0 overflow-y-auto px-5 py-5">
 
           {/* View mode */}
           {localFacility && mode === 'view' && (
