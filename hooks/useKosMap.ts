@@ -39,6 +39,7 @@ type KosAction =
   | { type: 'UPDATE_FACILITY'; payload: { floorId: string; facility: Facility } }
   | { type: 'DELETE_FACILITY'; payload: { floorId: string; facilityId: string } }
   | { type: 'SET_DRAG_STATE'; payload: DragState | null }
+  | { type: 'REORDER_FLOORS'; payload: string[] }       // ordered array of floorIds
   | { type: 'ADD_ROOM_TYPE';    payload: RoomType }
   | { type: 'UPDATE_ROOM_TYPE'; payload: RoomType }
   | { type: 'DELETE_ROOM_TYPE'; payload: string };  // id — blocked if any room references it
@@ -118,9 +119,14 @@ function reducer(state: AppState, action: KosAction): AppState {
       };
 
     case 'ADD_FLOOR': {
+      const maxOrder = state.boardingHouse.floors.reduce(
+        (max, f) => Math.max(max, f.order),
+        -1,
+      );
       const newFloor: Floor = {
         id: action.payload.id,
         name: action.payload.name,
+        order: maxOrder + 1,
         objects: [],
       };
       return {
@@ -297,6 +303,19 @@ function reducer(state: AppState, action: KosAction): AppState {
     case 'SET_DRAG_STATE':
       return { ...state, dragState: action.payload };
 
+    case 'REORDER_FLOORS': {
+      const orderMap = new Map(action.payload.map((id, i) => [id, i]));
+      return {
+        ...state,
+        boardingHouse: {
+          ...state.boardingHouse,
+          floors: state.boardingHouse.floors
+            .map(f => ({ ...f, order: orderMap.get(f.id) ?? f.order }))
+            .sort((a, b) => a.order - b.order),
+        },
+      };
+    }
+
     case 'ADD_ROOM_TYPE':
       return {
         ...state,
@@ -401,6 +420,9 @@ export function useKosMap() {
 
     deleteFloor: (id: string) =>
       dispatch({ type: 'DELETE_FLOOR', payload: id }),
+
+    reorderFloors: (floorIds: string[]) =>
+      dispatch({ type: 'REORDER_FLOORS', payload: floorIds }),
 
     addRoom: (floorId: string, roomData: Omit<Room, 'id'>) =>
       dispatch({

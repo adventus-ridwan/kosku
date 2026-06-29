@@ -106,6 +106,7 @@ export function GridCanvas({
     {},
   );
   const existingRoomNames = floorRooms.map(r => r.name);
+  const addFirstRef = useRef<HTMLButtonElement>(null);
 
   // ── Escape cancels drag ──────────────────────────────────────────────────
   useEffect(() => {
@@ -269,6 +270,11 @@ export function GridCanvas({
     setOverlay(null);
   }
 
+  function handleAddFirstRoom() {
+    const rect = addFirstRef.current?.getBoundingClientRect() ?? new DOMRect(100, 200, 0, 0);
+    setOverlay({ kind: 'add-room', x: 0, y: 0, rect });
+  }
+
   // ── Render ───────────────────────────────────────────────────────────────
 
   return (
@@ -300,9 +306,28 @@ export function GridCanvas({
         )}
       </div>
 
+      {/* Empty floor state */}
+      {floor.objects.length === 0 && (
+        <div className="flex flex-col items-center justify-center py-16 gap-3 min-h-[240px]">
+          <span className="text-4xl select-none" role="img" aria-hidden>🏗️</span>
+          <p className="text-sm text-slate-400">Lantai ini masih kosong.</p>
+          {mode === 'edit' && (
+            <button
+              ref={addFirstRef}
+              type="button"
+              onClick={handleAddFirstRoom}
+              className="mt-1 text-sm font-medium text-slate-700 border border-slate-300 px-4 py-2 rounded-lg hover:bg-white transition-colors"
+            >
+              + Tambah Kamar
+            </button>
+          )}
+        </div>
+      )}
+
       {/* Grid
           Layer 1 (DOM-first): background cells — static in view mode, interactive in edit mode.
           Layer 2 (DOM-last):  entity tiles (rooms + facilities) — on top via DOM-order stacking. */}
+      {floor.objects.length > 0 && (
       <div
         ref={gridRef}
         className="grid"
@@ -467,6 +492,7 @@ export function GridCanvas({
           );
         })()}
       </div>
+      )}
 
       {/* Legend — inline with canvas, no visual separator */}
       <div className="flex flex-wrap gap-5 mt-5 pl-0.5">

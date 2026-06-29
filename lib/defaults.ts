@@ -23,6 +23,7 @@ export const defaultBoardingHouse: BoardingHouse = {
     {
       id: 'floor-1',
       name: 'Lantai 1',
+      order: 0,
       objects: [
         { kind: 'room', id: 'r-101', name: '101', x: 0, y: 0, width: 1, height: 1, status: 'occupied',    occupant: 'Budi Santoso',  priceOverride: 1500000, notes: '' },
         { kind: 'room', id: 'r-102', name: '102', x: 1, y: 0, width: 1, height: 1, status: 'available',   occupant: '',              priceOverride: 1200000, notes: '' },
@@ -35,6 +36,7 @@ export const defaultBoardingHouse: BoardingHouse = {
     {
       id: 'floor-2',
       name: 'Lantai 2',
+      order: 1,
       objects: [
         { kind: 'room', id: 'r-201', name: '201', x: 0, y: 0, width: 1, height: 1, status: 'occupied',  occupant: 'Dewi Kusuma',  priceOverride: 1800000, notes: '' },
         { kind: 'room', id: 'r-202', name: '202', x: 1, y: 0, width: 1, height: 1, status: 'available', occupant: '',             priceOverride: 1800000, notes: '' },

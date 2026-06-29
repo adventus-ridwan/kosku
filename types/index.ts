@@ -133,6 +133,7 @@ export function isPOI(o: MapObject): o is POI           { return o.kind === 'poi
 export interface Floor {
   id: string;
   name: string;
+  order: number;         // display position; managed by REORDER_FLOORS
   objects: MapObject[];  // unified — replaces separate rooms[] + facilities[]
 }
 

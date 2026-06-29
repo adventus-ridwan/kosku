@@ -117,15 +117,18 @@ function normalizeRoomType(t: RoomType): RoomType {
 
 // Migrate a floor from the old silo format (rooms[] + facilities[]) to the unified objects[] format.
 // If the floor already has objects[], normalize any rooms inside it instead.
-function normalizeFloor(raw: unknown): Floor {
+// index is the floor's position in the array — used to backfill `order` for pre-ET-009 data.
+function normalizeFloor(raw: unknown, index: number): Floor {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const f = raw as any;
+  const order: number = typeof f.order === 'number' ? f.order : index;
 
   if (Array.isArray(f.objects)) {
     // Already in unified format — only normalize Room profile fields
     return {
       id:   f.id,
       name: f.name,
+      order,
       objects: (f.objects as MapObject[]).map(obj =>
         obj.kind === 'room' ? normalizeRoom(obj) : obj,
       ),
@@ -140,7 +143,7 @@ function normalizeFloor(raw: unknown): Floor {
     (fac: Facility) => ({ ...fac, kind: 'facility' }),
   );
 
-  return { id: f.id, name: f.name, objects: [...rooms, ...facilities] };
+  return { id: f.id, name: f.name, order, objects: [...rooms, ...facilities] };
 }
 
 export function loadFromStorage(): BoardingHouse | null {
@@ -151,7 +154,7 @@ export function loadFromStorage(): BoardingHouse | null {
     const data = JSON.parse(raw) as BoardingHouse;
 
     // Floor normalizer — update whenever Floor or its contained types gain new fields
-    data.floors = data.floors.map(normalizeFloor);
+    data.floors = data.floors.map((f, i) => normalizeFloor(f, i));
 
     // RoomType normalizer — update whenever RoomType gains a new field
     data.roomTypes = Array.isArray(data.roomTypes)

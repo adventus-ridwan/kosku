@@ -6,7 +6,7 @@ import { UsageModeProvider } from '@/context/UsageModeContext';
 import BoardingHouseMap from '@/components/BoardingHouseMap';
 import { isRoom, type RoomType, type RoomAmenity } from '@/types';
 import type { PropertyAmenity, PropertyType } from '@/features/property/types';
-import { ProductMockup } from './ProductMockup';
+import Image from 'next/image';
 import { resolveRoomProfile } from '@/lib/resolveRoomProfile';
 import { getDummyGallery } from '@/lib/dummyGallery';
 
@@ -115,11 +115,11 @@ function HeroSection({
   return (
     // pt-20 clears the 48px fixed nav bar + provides breathing room
     <section className="bg-slate-900 text-white">
-      <div className="max-w-5xl mx-auto px-6 pt-20 pb-24 sm:pt-24 sm:pb-28">
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-10 lg:gap-16 items-center">
+      <div className="max-w-[1440px] mx-auto px-6 pt-20 pb-24 sm:pt-24 sm:pb-28">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-8 items-center">
 
           {/* ── Content ─────────────────────────────────────────────────────── */}
-          <div className="lg:col-span-3">
+          <div className="lg:col-span-5">
 
             {/* Eyebrow */}
             {type && (
@@ -193,9 +193,29 @@ function HeroSection({
             )}
           </div>
 
-          {/* ── Product Mockup ──────────────────────────────────────────────── */}
-          <div className="hidden lg:block lg:col-span-2">
-            <ProductMockup />
+          {/* ── Hero illustration ───────────────────────────────────────────── */}
+          <div className="hidden lg:col-span-7 lg:flex items-center justify-center relative">
+            {/* Soft radial glow anchors the image to the dark background */}
+            <div
+              className="absolute pointer-events-none"
+              style={{
+                inset: '-24%',
+                background: 'radial-gradient(ellipse at center, rgba(255,255,255,0.045) 0%, transparent 68%)',
+              }}
+            />
+            <Image
+              src="/images/hero-building-dark.png"
+              alt=""
+              width={1536}
+              height={1024}
+              className="relative w-full h-auto"
+              style={{
+                filter: 'drop-shadow(0 6px 28px rgba(0,0,0,0.45))',
+                opacity: 0.97,
+              }}
+              priority
+              draggable={false}
+            />
           </div>
 
         </div>

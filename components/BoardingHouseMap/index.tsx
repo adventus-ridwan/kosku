@@ -3,7 +3,7 @@
 import { useKosMap } from '@/hooks/useKosMap';
 import { useUsageMode } from '@/context/UsageModeContext';
 import { isRoom } from '@/types';
-import { FloorTab } from './FloorTab';
+import { FloorTabBar } from './FloorTabBar';
 import { GridCanvas } from './GridCanvas';
 import { RoomDrawer } from './RoomDrawer';
 import { FacilityDrawer } from './FacilityDrawer';
@@ -19,14 +19,20 @@ export default function BoardingHouseMap() {
   const { boardingHouse } = state;
   const effectiveMode = usageMode === 'public' ? 'view' : 'edit';
   const waPhone = boardingHouse.contact?.whatsapp?.trim() || undefined;
+  const sortedFloors = [...boardingHouse.floors].sort((a, b) => a.order - b.order);
 
   return (
     <div className={['flex flex-col bg-slate-100', usageMode !== 'public' ? 'min-h-screen' : ''].join(' ')}>
       <div className="flex-1 overflow-auto px-6 py-5">
-        <FloorTab
-          floors={boardingHouse.floors}
+        <FloorTabBar
+          floors={sortedFloors}
           activeFloorId={state.activeFloorId}
+          mode={effectiveMode}
           onSelect={actions.setActiveFloor}
+          onAdd={actions.addFloor}
+          onRename={actions.renameFloor}
+          onDelete={actions.deleteFloor}
+          onReorder={actions.reorderFloors}
         />
         <GridCanvas
           floor={activeFloor}
