@@ -23,7 +23,7 @@ export function Sidebar({ open, onClose, collapsed, onToggleCollapse }: SidebarP
   }, [pathname, onClose]);
 
   const visibleItems = NAV_ITEMS.filter(
-    item => !item.roles || item.roles.includes(role as UserRole)
+    item => !item.hidden && (!item.roles || item.roles.includes(role as UserRole))
   );
 
   return (
