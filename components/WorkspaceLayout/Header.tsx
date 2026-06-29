@@ -55,6 +55,15 @@ export function Header({ onMenuOpen }: HeaderProps) {
       </div>
 
       <div className="flex items-center gap-3 shrink-0">
+        <a
+          href="/kos"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="hidden sm:inline-flex items-center text-xs text-gray-500 hover:text-gray-700 transition-colors"
+        >
+          Preview Publik ↗
+        </a>
+        <div className="hidden sm:block w-px h-3.5 bg-gray-200" aria-hidden="true" />
         {role && (
           <>
             <span className="hidden sm:block text-xs text-gray-400">{ROLE_LABEL[role] ?? role}</span>

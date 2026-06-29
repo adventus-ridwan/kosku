@@ -77,9 +77,14 @@ export default function LoginPage() {
           Masuk sebagai {ROLES.find(o => o.value === selected)?.label}
         </button>
 
-        <p className="text-xs text-gray-400 text-center mt-4">
-          Halaman publik dapat diakses tanpa login
-        </p>
+        <div className="mt-6 pt-5 border-t border-gray-100 text-center">
+          <a
+            href="/kos"
+            className="text-sm text-gray-400 hover:text-gray-600 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-400 rounded"
+          >
+            ← Kembali ke Halaman Publik
+          </a>
+        </div>
       </div>
     </div>
   );
