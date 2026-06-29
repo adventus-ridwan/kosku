@@ -3,7 +3,6 @@
 import { useKosMap } from '@/hooks/useKosMap';
 import { useUsageMode } from '@/context/UsageModeContext';
 import { isRoom } from '@/types';
-import { Toolbar } from './Toolbar';
 import { FloorTab } from './FloorTab';
 import { GridCanvas } from './GridCanvas';
 import { RoomDrawer } from './RoomDrawer';
@@ -18,18 +17,11 @@ export default function BoardingHouseMap() {
   if (!activeFloor) return null;
 
   const { boardingHouse } = state;
-  // Public mode is always read-only regardless of reducer state.
-  const effectiveMode = usageMode === 'public' ? 'view' : state.mode;
+  // Public mode is always read-only. Admin mode is always edit — the toggle has been removed.
+  const effectiveMode = usageMode === 'public' ? 'view' : 'edit';
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
-      {usageMode === 'admin' && (
-        <Toolbar
-          houseName={boardingHouse.name}
-          mode={effectiveMode}
-          onModeChange={actions.setMode}
-        />
-      )}
       <div className="flex-1 overflow-auto px-6 py-5">
         <FloorTab
           floors={boardingHouse.floors}

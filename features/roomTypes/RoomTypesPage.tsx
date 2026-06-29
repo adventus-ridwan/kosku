@@ -1,7 +1,17 @@
 'use client';
 
 import { useState } from 'react';
-import type { RoomType } from '@/types';
+import type { RoomType, LabelColor } from '@/types';
+
+const SWATCH_CLASS: Record<LabelColor, string> = {
+  gray:   'bg-gray-400',
+  blue:   'bg-blue-500',
+  green:  'bg-emerald-500',
+  purple: 'bg-purple-500',
+  orange: 'bg-orange-500',
+  red:    'bg-red-500',
+  pink:   'bg-pink-500',
+};
 import { useRoomTypes } from './useRoomTypes';
 import { RoomTypePanel } from './RoomTypePanel';
 
@@ -129,6 +139,13 @@ function RoomTypeListItem({ roomType, roomCount, isSelected, onClick }: RoomType
         isSelected ? 'bg-blue-50' : 'hover:bg-gray-50',
       ].join(' ')}
     >
+      <span
+        className={[
+          'w-3 h-3 rounded-full shrink-0',
+          SWATCH_CLASS[roomType.labelColor ?? 'gray'],
+        ].join(' ')}
+        aria-hidden="true"
+      />
       <div className="flex-1 min-w-0">
         <p className="text-sm font-semibold text-gray-900 truncate">{roomType.name}</p>
         {roomType.description && (

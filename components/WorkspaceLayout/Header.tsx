@@ -59,9 +59,14 @@ export function Header({ onMenuOpen }: HeaderProps) {
           href="/kos"
           target="_blank"
           rel="noopener noreferrer"
-          className="hidden sm:inline-flex items-center text-xs text-gray-500 hover:text-gray-700 transition-colors"
+          title="Lihat tampilan publik yang dilihat calon penghuni"
+          className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-medium text-gray-600 hover:text-gray-900 hover:border-gray-300 hover:bg-gray-50 transition-colors"
         >
-          Preview Publik ↗
+          <svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden="true">
+            <path d="M1 6.5C1 6.5 3 2 6.5 2s5.5 4.5 5.5 4.5S10 11 6.5 11 1 6.5 1 6.5Z" stroke="currentColor" strokeWidth="1.25" strokeLinejoin="round" />
+            <circle cx="6.5" cy="6.5" r="1.75" stroke="currentColor" strokeWidth="1.25" />
+          </svg>
+          View
         </a>
         <div className="hidden sm:block w-px h-3.5 bg-gray-200" aria-hidden="true" />
         {role && (

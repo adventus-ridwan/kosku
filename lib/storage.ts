@@ -109,8 +109,9 @@ function normalizeRoomType(t: RoomType): RoomType {
   return {
     ...t,
     // Migrate old `basePrice` field name → `price`.
-    price:  t.price ?? raw.basePrice,
-    photos: Array.isArray(t.photos) ? t.photos : [],
+    price:      t.price ?? raw.basePrice,
+    photos:     Array.isArray(t.photos) ? t.photos : [],
+    labelColor: t.labelColor ?? 'gray',
   };
 }
 

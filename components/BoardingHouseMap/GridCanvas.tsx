@@ -176,11 +176,16 @@ export function GridCanvas({
         })}
 
         {/* Layer 2 — entity tiles (rooms first, then facilities — both above Layer 1) */}
-        {floorRooms.map(room => (
+        {floorRooms.map(room => {
+          const resolved = resolveRoomProfile(room, roomTypes);
+          return (
           <RoomTile
             key={room.id}
             room={room}
-            resolvedPrice={resolveRoomProfile(room, roomTypes).price}
+            resolvedPrice={resolved.price}
+            typeName={resolved.typeName ?? undefined}
+            labelColor={resolved.labelColor}
+            previewPhoto={resolved.photos[0]?.url}
             occupantName={usageMode === 'public' ? undefined : occupantNames[room.id]}
             style={{
               gridColumn: `${room.x + 1} / span ${room.width}`,
@@ -191,7 +196,8 @@ export function GridCanvas({
               onRoomClick(room.id);
             }}
           />
-        ))}
+          );
+        })}
         {floorFacilities.map(fac => (
           <FacilityTile
             key={fac.id}

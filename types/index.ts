@@ -25,6 +25,8 @@ export type {
 
 export type RoomStatus = 'available' | 'occupied' | 'maintenance';
 
+export type LabelColor = 'gray' | 'blue' | 'green' | 'purple' | 'orange' | 'red' | 'pink';
+
 // Photo placeholder — shape to be finalized in the gallery sprint
 export interface RoomTypePhoto {
   id:         string;
@@ -45,6 +47,7 @@ export interface RoomType {
   price?:        number;           // canonical monthly rent in IDR; rooms inherit unless overriding
   publishStatus: PublishStatus;
   sortOrder?:    number;           // display order in workspace and public experience
+  labelColor?:   LabelColor;       // visual identity color for badges
   // amenitiesMode?: 'inherit' | 'replace' | 'append'  — reserved, not implemented in ET-005
 }
 

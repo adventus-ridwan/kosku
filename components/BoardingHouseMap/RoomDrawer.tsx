@@ -3,10 +3,14 @@ import type { Room, RoomStatus, AppMode, RoomType } from '@/types';
 import { useAuth } from '@/features/auth/useAuth';
 import { resolveRoomProfile } from '@/lib/resolveRoomProfile';
 import { useUsageMode } from '@/context/UsageModeContext';
-import { canDeleteRoom, canEditRoom, canViewTenantInfo, canViewContractHistory } from '@/features/auth/permission';
+import { canDeleteRoom, canEditRoom, canPublishRoom, canViewTenantInfo, canViewContractHistory } from '@/features/auth/permission';
 import { TenantTab } from '@/features/tenants/TenantTab';
 import { useTenant } from '@/features/tenants/useTenant';
 import { HistoryTab } from '@/features/history/HistoryTab';
+import { RoomBasicSection } from '@/features/rooms/sections/RoomBasicSection';
+import { RoomAmenitiesSection } from '@/features/rooms/sections/RoomAmenitiesSection';
+import { RoomPublishSection } from '@/features/rooms/sections/RoomPublishSection';
+import { GalleryStrip } from './GalleryStrip';
 
 // ─── Status display config ───────────────────────────────────────────────────
 
@@ -174,14 +178,16 @@ export function RoomDrawer({
     onSave(floorId, { ...room, status: 'available' });
   }
 
-  const resolvedPrice = localRoom ? resolveRoomProfile(localRoom, roomTypes).price : undefined;
+  const resolvedProfile = localRoom ? resolveRoomProfile(localRoom, roomTypes) : null;
+  const resolvedPrice = resolvedProfile?.price;
+  const availableAmenities = (resolvedProfile?.amenities ?? []).filter(a => a.available);
   const formattedPrice = resolvedPrice
     ? new Intl.NumberFormat('id-ID', {
         style: 'currency',
         currency: 'IDR',
         maximumFractionDigits: 0,
       }).format(resolvedPrice)
-    : '—';
+    : null;
 
   // ─── Render ────────────────────────────────────────────────────────────────
 
@@ -211,15 +217,23 @@ export function RoomDrawer({
         {/* ── Header ── */}
         <header className="flex items-center justify-between gap-3 px-5 py-4 border-b border-gray-100 shrink-0">
           {mode === 'view' && localRoom ? (
-            <div className="flex items-center gap-2.5 min-w-0">
-              <h2 className="text-base font-semibold text-gray-900 truncate">
-                {localRoom.name}
-              </h2>
-              <span
-                className={`shrink-0 inline-flex px-2 py-0.5 rounded-full text-xs font-semibold ${STATUS_BADGE[localRoom.status]}`}
-              >
-                {STATUS_LABEL[localRoom.status]}
-              </span>
+            <div className="min-w-0">
+              <div className="flex items-center gap-2.5">
+                <h2 className="text-base font-semibold text-gray-900 truncate">
+                  {localRoom.name}
+                </h2>
+                <span
+                  className={`shrink-0 inline-flex px-2 py-0.5 rounded-full text-xs font-semibold ${STATUS_BADGE[localRoom.status]}`}
+                >
+                  {STATUS_LABEL[localRoom.status]}
+                </span>
+              </div>
+              {usageMode === 'public' && formattedPrice && (
+                <p className="text-sm font-semibold text-gray-900 mt-0.5">
+                  {formattedPrice}
+                  <span className="text-xs font-normal text-gray-400 ml-1">/ bulan</span>
+                </p>
+              )}
             </div>
           ) : (
             <h2 className="text-base font-semibold text-gray-900">Edit Kamar</h2>
@@ -238,8 +252,8 @@ export function RoomDrawer({
           </button>
         </header>
 
-        {/* ── Tabs ── */}
-        {localRoom && (
+        {/* ── Tabs — hidden on public page (only Information would be visible anyway) ── */}
+        {localRoom && usageMode !== 'public' && (
           <div className="flex shrink-0 border-b border-gray-100">
             <button
               type="button"
@@ -287,14 +301,81 @@ export function RoomDrawer({
         {/* ── Body (scrollable) ── */}
         <div className="flex-1 min-h-0 overflow-y-auto px-5 py-5">
 
-          {/* View mode — read-only description list */}
-          {activeTab === 'information' && localRoom && mode === 'view' && (
+          {/* Gallery strip — shown for Information tab in all modes, always read-only */}
+          {activeTab === 'information' && resolvedProfile && resolvedProfile.photos.length > 0 && (
+            <div className="mb-5">
+              <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">
+                Foto
+              </p>
+              <GalleryStrip photos={resolvedProfile.photos} />
+            </div>
+          )}
+
+          {/* View mode — public: rich room presentation */}
+          {activeTab === 'information' && localRoom && mode === 'view' && usageMode === 'public' && resolvedProfile && (
+            <div className="space-y-6">
+              {resolvedProfile.description && (
+                <div>
+                  <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">
+                    Deskripsi
+                  </p>
+                  <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">
+                    {resolvedProfile.description}
+                  </p>
+                </div>
+              )}
+
+              {availableAmenities.length > 0 && (
+                <div>
+                  <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2.5">
+                    Fasilitas Kamar
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {availableAmenities.map(a => (
+                      <span
+                        key={a.id}
+                        className="inline-flex items-center gap-1.5 bg-gray-50 border border-gray-200 px-2.5 py-1 rounded-full text-xs text-gray-600"
+                      >
+                        <span aria-hidden="true">{a.icon}</span>
+                        <span>{a.name}</span>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {(resolvedProfile.size || resolvedProfile.capacity) && (
+                <div>
+                  <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2.5">
+                    Detail Kamar
+                  </p>
+                  <div className="flex flex-wrap gap-5">
+                    {resolvedProfile.size && (
+                      <div className="flex items-center gap-1.5 text-sm text-gray-700">
+                        <span aria-hidden="true">📐</span>
+                        <span>{resolvedProfile.size} m²</span>
+                      </div>
+                    )}
+                    {resolvedProfile.capacity && (
+                      <div className="flex items-center gap-1.5 text-sm text-gray-700">
+                        <span aria-hidden="true">👤</span>
+                        <span>Maks. {resolvedProfile.capacity} orang</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* View mode — admin: operational summary */}
+          {activeTab === 'information' && localRoom && mode === 'view' && usageMode !== 'public' && (
             <dl className="space-y-5">
               <div>
                 <dt className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1">
                   Harga / Bulan
                 </dt>
-                <dd className="text-sm font-medium text-gray-900">{formattedPrice}</dd>
+                <dd className="text-sm font-medium text-gray-900">{formattedPrice ?? '—'}</dd>
               </div>
               {canViewTenantInfo(effectiveRole) && (
                 <div>
@@ -319,7 +400,7 @@ export function RoomDrawer({
 
           {/* Edit mode — form */}
           {activeTab === 'information' && localRoom && mode === 'edit' && (
-            <div className="space-y-4">
+            <div className="space-y-5">
 
               {/* Nomor Kamar */}
               <div>
@@ -378,6 +459,30 @@ export function RoomDrawer({
                 )}
               </div>
 
+              {/* Tipe Kamar */}
+              {roomTypes.length > 0 && (
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">
+                    Tipe Kamar
+                  </label>
+                  <select
+                    value={localRoom.roomTypeId ?? ''}
+                    onChange={e => update('roomTypeId', e.target.value || undefined)}
+                    className={FIELD}
+                  >
+                    <option value="">— Tanpa tipe —</option>
+                    {roomTypes.map(rt => (
+                      <option key={rt.id} value={rt.id}>{rt.name}</option>
+                    ))}
+                  </select>
+                  {localRoom.roomTypeId && resolvedProfile?.typeName && (
+                    <p className="text-[10px] text-purple-600 mt-0.5">
+                      Harga, deskripsi, dan fasilitas diwarisi dari tipe ini.
+                    </p>
+                  )}
+                </div>
+              )}
+
               {/* Harga Override */}
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">
@@ -401,6 +506,63 @@ export function RoomDrawer({
                   <p className="text-xs text-gray-400 mt-0.5">Kosongkan untuk mewarisi dari tipe kamar</p>
                 )}
               </div>
+
+              {/* Deskripsi & Ukuran */}
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-2">
+                  Deskripsi &amp; Ukuran
+                  {!localRoom.description?.trim() && resolvedProfile?.description && (
+                    <span className="ml-1.5 text-purple-600 font-normal text-[10px]">dari tipe</span>
+                  )}
+                </label>
+                <RoomBasicSection
+                  value={{
+                    description: localRoom.description ?? '',
+                    size:        localRoom.size,
+                    capacity:    localRoom.capacity,
+                  }}
+                  onChange={v => {
+                    update('description', v.description);
+                    update('size', v.size);
+                    update('capacity', v.capacity);
+                  }}
+                  disabled={!canEditRoom(effectiveRole)}
+                />
+              </div>
+
+              {/* Fasilitas Kamar */}
+              {resolvedProfile && (
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-2">
+                    Fasilitas Kamar
+                    {!localRoom.roomAmenities?.length && localRoom.roomTypeId && (
+                      <span className="ml-1.5 text-purple-600 font-normal text-[10px]">dari tipe</span>
+                    )}
+                  </label>
+                  <RoomAmenitiesSection
+                    value={resolvedProfile.amenities}
+                    onChange={amenities => update('roomAmenities', amenities)}
+                    disabled={!canEditRoom(effectiveRole)}
+                  />
+                </div>
+              )}
+
+              {/* Status Publikasi */}
+              {resolvedProfile && (
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-2">
+                    Status Publikasi
+                    {!localRoom.publishStatus && localRoom.roomTypeId && (
+                      <span className="ml-1.5 text-purple-600 font-normal text-[10px]">dari tipe</span>
+                    )}
+                  </label>
+                  <RoomPublishSection
+                    value={resolvedProfile.publishStatus}
+                    onChange={v => update('publishStatus', v)}
+                    disabled={!canPublishRoom(effectiveRole)}
+                  />
+                </div>
+              )}
 
               {/* Catatan */}
               <div>

@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { usePropertyProfile } from '@/features/property/usePropertyProfile';
 import { UsageModeProvider } from '@/context/UsageModeContext';
 import BoardingHouseMap from '@/components/BoardingHouseMap';
@@ -42,15 +43,7 @@ interface HeroProps {
 function HeroSection({ name, tagline, address, type, waUrl }: HeroProps) {
   return (
     <section className="bg-slate-900 text-white">
-      <div className="max-w-3xl mx-auto px-6 pt-6 pb-20 sm:pb-28">
-        <div className="flex justify-end mb-10">
-          <a
-            href="/workspace"
-            className="text-xs text-slate-500 hover:text-slate-300 transition-colors"
-          >
-            Workspace →
-          </a>
-        </div>
+      <div className="max-w-3xl mx-auto px-6 pt-10 pb-20 sm:pt-12 sm:pb-28">
         {type && (
           <p className="text-xs font-semibold uppercase tracking-widest text-amber-400 mb-5">
             {PROPERTY_TYPE_LABEL[type]}
@@ -70,7 +63,9 @@ function HeroSection({ name, tagline, address, type, waUrl }: HeroProps) {
             <span>{address}</span>
           </p>
         )}
-        <div className="flex flex-wrap gap-3">
+
+        {/* CTA group — primary tenant action + secondary owner entry */}
+        <div className="flex flex-wrap items-center gap-3">
           {waUrl && (
             <a
               href={waUrl}
@@ -82,10 +77,10 @@ function HeroSection({ name, tagline, address, type, waUrl }: HeroProps) {
             </a>
           )}
           <a
-            href="#peta"
-            className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white font-semibold px-6 py-3 rounded-xl transition-colors"
+            href="/workspace"
+            className="inline-flex items-center gap-2 border border-slate-700 text-slate-400 hover:border-slate-500 hover:text-slate-200 text-sm font-medium px-4 py-2.5 rounded-xl transition-colors"
           >
-            Jelajahi Kos ↓
+            Owner Login
           </a>
         </div>
       </div>
@@ -98,9 +93,12 @@ function HeroSection({ name, tagline, address, type, waUrl }: HeroProps) {
 function MapSection() {
   return (
     <section id="peta">
-      <div className="bg-slate-800 px-6 py-8">
+      <div className="bg-slate-800 px-6 pt-16 pb-10 sm:pt-20 sm:pb-12">
         <div className="max-w-3xl mx-auto">
-          <h2 className="text-xl font-semibold text-white mb-1">Denah Kos</h2>
+          <p className="text-xs font-semibold uppercase tracking-widest text-amber-400 mb-4">
+            Denah
+          </p>
+          <h2 className="text-2xl font-semibold text-white mb-2">Peta Kamar</h2>
           <p className="text-slate-400 text-sm">
             Klik kamar atau fasilitas untuk melihat detailnya.
           </p>
@@ -286,6 +284,50 @@ function ContactSection({ waUrl, phone, address }: ContactProps) {
   );
 }
 
+// ─── Floating Map Shortcut ────────────────────────────────────────────────────
+// Appears only when the map section (#peta) has scrolled out of the viewport.
+// Uses IntersectionObserver so no scroll listener is needed.
+
+function MapShortcut() {
+  const [show, setShow] = useState(false);
+
+  useEffect(() => {
+    const target = document.getElementById('peta');
+    if (!target) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => setShow(!entry.isIntersecting),
+      { threshold: 0 },
+    );
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, []);
+
+  function scrollToMap() {
+    document.getElementById('peta')?.scrollIntoView({ behavior: 'smooth' });
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={scrollToMap}
+      aria-label="Kembali ke denah"
+      className={[
+        'fixed bottom-6 right-6 z-50',
+        'inline-flex items-center gap-1.5 px-3.5 py-2',
+        'bg-slate-800/90 backdrop-blur-sm text-white text-sm font-medium',
+        'rounded-full shadow-lg border border-slate-700/50',
+        'hover:bg-slate-700 transition-all duration-200',
+        show
+          ? 'opacity-100 translate-y-0 pointer-events-auto'
+          : 'opacity-0 translate-y-2 pointer-events-none',
+      ].join(' ')}
+    >
+      🗺 Denah
+    </button>
+  );
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export function PublicExperiencePage() {
@@ -335,6 +377,8 @@ export function PublicExperiencePage() {
       )}
 
       <ContactSection waUrl={waUrl} phone={phone} address={address} />
+
+      <MapShortcut />
     </main>
   );
 }

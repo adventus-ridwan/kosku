@@ -1,10 +1,20 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import type { RoomType } from '@/types';
+import type { RoomType, LabelColor } from '@/types';
 import { RoomAmenitiesSection } from '@/features/rooms/sections/RoomAmenitiesSection';
 import { RoomPublishSection } from '@/features/rooms/sections/RoomPublishSection';
 import { DEFAULT_ROOM_AMENITIES } from '@/features/rooms/defaults';
+
+const PALETTE: { value: LabelColor; label: string; swatch: string; badgeClass: string }[] = [
+  { value: 'gray',   label: 'Abu-abu', swatch: 'bg-gray-400',    badgeClass: 'bg-gray-100 text-gray-600'    },
+  { value: 'blue',   label: 'Biru',    swatch: 'bg-blue-500',    badgeClass: 'bg-blue-100 text-blue-700'    },
+  { value: 'green',  label: 'Hijau',   swatch: 'bg-emerald-500', badgeClass: 'bg-emerald-100 text-emerald-700' },
+  { value: 'purple', label: 'Ungu',    swatch: 'bg-purple-500',  badgeClass: 'bg-purple-100 text-purple-700' },
+  { value: 'orange', label: 'Oranye',  swatch: 'bg-orange-500',  badgeClass: 'bg-orange-100 text-orange-700' },
+  { value: 'red',    label: 'Merah',   swatch: 'bg-red-500',     badgeClass: 'bg-red-100 text-red-700'      },
+  { value: 'pink',   label: 'Pink',    swatch: 'bg-pink-500',    badgeClass: 'bg-pink-100 text-pink-700'    },
+];
 
 const FIELD =
   'w-full border border-gray-200 rounded-md px-3 py-2 text-sm text-gray-900 ' +
@@ -22,6 +32,7 @@ const EMPTY_DRAFT: DraftType = {
   amenities:     DEFAULT_ROOM_AMENITIES,
   photos:        [],
   publishStatus: 'draft',
+  labelColor:    'gray',
 };
 
 interface RoomTypePanelProps {
@@ -149,6 +160,44 @@ export function RoomTypePanel({
                 className={FIELD}
               />
               {nameError && <p className="text-xs text-red-500 mt-1">{nameError}</p>}
+            </div>
+          </section>
+
+          {/* Label color */}
+          <section className={sectionClass}>
+            <h2 className={sectionTitleClass}>Warna Label</h2>
+            <div className="flex flex-col gap-3">
+              <div className="flex gap-2 flex-wrap">
+                {PALETTE.map(p => (
+                  <button
+                    key={p.value}
+                    type="button"
+                    title={p.label}
+                    onClick={() => patch({ labelColor: p.value })}
+                    className={[
+                      'w-7 h-7 rounded-full transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-900',
+                      p.swatch,
+                      (draft.labelColor ?? 'gray') === p.value
+                        ? 'ring-2 ring-offset-2 ring-gray-900 scale-110'
+                        : 'hover:scale-110',
+                    ].join(' ')}
+                    aria-pressed={(draft.labelColor ?? 'gray') === p.value}
+                    aria-label={p.label}
+                  />
+                ))}
+              </div>
+              {/* Live preview */}
+              {draft.name && (
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-gray-400">Preview:</span>
+                  <span className={[
+                    'inline-flex px-2 py-0.5 rounded-full text-xs font-medium',
+                    (PALETTE.find(p => p.value === (draft.labelColor ?? 'gray')) ?? PALETTE[0]).badgeClass,
+                  ].join(' ')}>
+                    {draft.name}
+                  </span>
+                </div>
+              )}
             </div>
           </section>
 
