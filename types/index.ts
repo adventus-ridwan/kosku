@@ -26,6 +26,7 @@ export type {
 export type RoomStatus = 'available' | 'occupied' | 'maintenance';
 
 export interface Room {
+  kind: 'room';
   id: string;
   name: string;
   x: number;       // 0-based grid column
@@ -46,6 +47,7 @@ export interface Room {
   roomAmenities?: RoomAmenity[];
 }
 
+// 'gate' is entrance/exit; 'hallway' is intentionally absent — use POI for corridors
 export type FacilityType =
   | 'stair'
   | 'parking'
@@ -56,9 +58,11 @@ export type FacilityType =
   | 'storage'
   | 'lobby'
   | 'garden'
+  | 'gate'
   | 'custom';
 
 export interface Facility {
+  kind: 'facility';
   id: string;
   name: string;
   facilityType: FacilityType;
@@ -69,13 +73,40 @@ export interface Facility {
   color: string;   // CSS hex background color (overrides type default for 'custom')
   icon: string;    // emoji character
   notes: string;
+  description?: string;
 }
+
+// POI interaction variants — sealed union; extend here as the product grows
+export type POIInteraction =
+  | { type: 'navigate-floor'; targetFloorId: string };
+
+// POIs are passive by default; interaction is present only when the POI needs to be interactive
+export interface POI {
+  kind: 'poi';
+  id: string;
+  name: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  icon?:        string;
+  label?:       string;
+  notes?:       string;
+  interaction?: POIInteraction;
+}
+
+// Unified map object — extend by adding a new | VariantInterface to this union
+export type MapObject = Room | Facility | POI;
+
+// Type guards — use for exhaustive switch statements and filter patterns
+export function isRoom(o: MapObject): o is Room         { return o.kind === 'room';     }
+export function isFacility(o: MapObject): o is Facility { return o.kind === 'facility'; }
+export function isPOI(o: MapObject): o is POI           { return o.kind === 'poi';      }
 
 export interface Floor {
   id: string;
   name: string;
-  rooms: Room[];
-  facilities: Facility[];
+  objects: MapObject[];  // unified — replaces separate rooms[] + facilities[]
 }
 
 export interface BoardingHouse {
@@ -101,7 +132,7 @@ export type AppMode = 'view' | 'edit';
 export type UsageMode = 'public' | 'admin';
 
 export interface DragState {
-  roomId: string;
+  draggedObjectId: string;  // was roomId — now covers any MapObject kind
   floorId: string;
   originX: number;
   originY: number;
@@ -114,7 +145,6 @@ export interface AppState {
   boardingHouse: BoardingHouse;
   mode: AppMode;
   activeFloorId: string;
-  selectedRoomId: string | null;
-  selectedFacilityId: string | null;
+  selectedObjectId: string | null;  // was selectedRoomId + selectedFacilityId (mutually exclusive pair)
   dragState: DragState | null;
 }

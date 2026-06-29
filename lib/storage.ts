@@ -1,8 +1,46 @@
-import type { BoardingHouse, Floor, Room } from '@/types';
+import type { BoardingHouse, Floor, Room, Facility, MapObject } from '@/types';
 import { DEFAULT_AMENITIES, DEFAULT_GALLERY_CATEGORIES } from '@/features/property/defaults';
 import { DEFAULT_ROOM_AMENITIES } from '@/features/rooms/defaults';
 
 const STORAGE_KEY = 'kos-map-v1';
+
+// Normalize a single Room: fill in any profile fields added after the data was first saved
+function normalizeRoom(r: Room): Room {
+  return {
+    ...r,
+    publishStatus: r.publishStatus ?? 'draft',
+    description:   r.description   ?? '',
+    roomAmenities: Array.isArray(r.roomAmenities) ? r.roomAmenities : DEFAULT_ROOM_AMENITIES,
+  };
+}
+
+// Migrate a floor from the old silo format (rooms[] + facilities[]) to the unified objects[] format.
+// If the floor already has objects[], normalize any rooms inside it instead.
+function normalizeFloor(raw: unknown): Floor {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const f = raw as any;
+
+  if (Array.isArray(f.objects)) {
+    // Already in unified format — only normalize Room profile fields
+    return {
+      id:   f.id,
+      name: f.name,
+      objects: (f.objects as MapObject[]).map(obj =>
+        obj.kind === 'room' ? normalizeRoom(obj) : obj,
+      ),
+    };
+  }
+
+  // Old silo format — inject kind discriminants and merge into objects[]
+  const rooms: Room[] = (Array.isArray(f.rooms) ? f.rooms : []).map((r: Room) =>
+    normalizeRoom({ ...r, kind: 'room' }),
+  );
+  const facilities: Facility[] = (Array.isArray(f.facilities) ? f.facilities : []).map(
+    (fac: Facility) => ({ ...fac, kind: 'facility' }),
+  );
+
+  return { id: f.id, name: f.name, objects: [...rooms, ...facilities] };
+}
 
 export function loadFromStorage(): BoardingHouse | null {
   if (typeof window === 'undefined') return null;
@@ -11,19 +49,10 @@ export function loadFromStorage(): BoardingHouse | null {
     if (raw === null) return null;
     const data = JSON.parse(raw) as BoardingHouse;
 
-    // Normalize floors and rooms — update both blocks whenever Floor or Room gains a new field
-    data.floors = data.floors.map((f): Floor => ({
-      ...f,
-      facilities: Array.isArray(f.facilities) ? f.facilities : [],
-      rooms: f.rooms.map((r): Room => ({   // Room profile normalizer (ET-003)
-        ...r,
-        publishStatus: r.publishStatus ?? 'draft',
-        description:   r.description   ?? '',
-        roomAmenities: Array.isArray(r.roomAmenities) ? r.roomAmenities : DEFAULT_ROOM_AMENITIES,
-      })),
-    }));
+    // Floor normalizer — update whenever Floor or its contained types gain new fields
+    data.floors = data.floors.map(normalizeFloor);
 
-    // Profile field normalizer — must be updated whenever BoardingHouse gains a new field
+    // Property profile normalizer — update whenever BoardingHouse gains a new field
     data.tagline     = data.tagline     ?? '';
     data.description = data.description ?? '';
     data.type        = data.type        ?? 'MIXED';

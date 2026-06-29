@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { Floor, Room, Facility, RoomStatus, AppMode } from '@/types';
+import { isRoom, isFacility } from '@/types';
 import { useAuth } from '@/features/auth/useAuth';
 import { canAddRoom, canAddFacility } from '@/features/auth/permission';
 import { useOccupantNames } from '@/features/tenants/useOccupantNames';
@@ -38,29 +39,33 @@ export function GridCanvas({
 }: GridCanvasProps) {
   const { role } = useAuth();
   const [overlay, setOverlay] = useState<Overlay>(null);
-  const occupantNames = useOccupantNames(floor.rooms);
+
+  const floorRooms = floor.objects.filter(isRoom);
+  const floorFacilities = floor.objects.filter(isFacility);
+
+  const occupantNames = useOccupantNames(floorRooms);
 
   const totalCells = gridCols * gridRows;
 
   // Build occupancy set covering both rooms and facilities (supports multi-cell spans)
   const occupiedCells = new Set<string>();
-  for (const room of floor.rooms) {
+  for (const room of floorRooms) {
     for (let dy = 0; dy < room.height; dy++)
       for (let dx = 0; dx < room.width; dx++)
         occupiedCells.add(`${room.x + dx},${room.y + dy}`);
   }
-  for (const fac of floor.facilities) {
+  for (const fac of floorFacilities) {
     for (let dy = 0; dy < fac.height; dy++)
       for (let dx = 0; dx < fac.width; dx++)
         occupiedCells.add(`${fac.x + dx},${fac.y + dy}`);
   }
 
-  const counts = floor.rooms.reduce<Partial<Record<RoomStatus, number>>>(
+  const counts = floorRooms.reduce<Partial<Record<RoomStatus, number>>>(
     (acc, r) => ({ ...acc, [r.status]: (acc[r.status] ?? 0) + 1 }),
     {},
   );
 
-  const existingRoomNames = floor.rooms.map(r => r.name);
+  const existingRoomNames = floorRooms.map(r => r.name);
 
   function handleCellClick(x: number, y: number, e: React.MouseEvent<HTMLButtonElement>) {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -71,6 +76,7 @@ export function GridCanvas({
     if (!canAddRoom(role)) return;
     if (!overlay || overlay.kind !== 'add-room') return;
     onAddRoom(floor.id, {
+      kind: 'room',
       name, price,
       x: overlay.x, y: overlay.y,
       width: 1, height: 1,
@@ -89,11 +95,11 @@ export function GridCanvas({
     <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
       {/* Stats bar */}
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mb-4 text-sm">
-        <span className="font-semibold text-gray-800">{floor.rooms.length} kamar</span>
-        {floor.facilities.length > 0 && (
+        <span className="font-semibold text-gray-800">{floorRooms.length} kamar</span>
+        {floorFacilities.length > 0 && (
           <>
             <span className="text-gray-300" aria-hidden>•</span>
-            <span className="text-gray-600">{floor.facilities.length} fasilitas</span>
+            <span className="text-gray-600">{floorFacilities.length} fasilitas</span>
           </>
         )}
         <span className="text-gray-300" aria-hidden>•</span>
@@ -166,7 +172,7 @@ export function GridCanvas({
         })}
 
         {/* Layer 2 — entity tiles (rooms first, then facilities — both above Layer 1) */}
-        {floor.rooms.map(room => (
+        {floorRooms.map(room => (
           <RoomTile
             key={room.id}
             room={room}
@@ -181,7 +187,7 @@ export function GridCanvas({
             }}
           />
         ))}
-        {floor.facilities.map(fac => (
+        {floorFacilities.map(fac => (
           <FacilityTile
             key={fac.id}
             facility={fac}

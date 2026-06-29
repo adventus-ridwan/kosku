@@ -8,10 +8,13 @@ import type {
   Room,
   Floor,
   Facility,
+  MapObject,
   BoardingHouse,
 } from '@/types';
+import { isRoom, isFacility } from '@/types';
 import { defaultBoardingHouse } from '@/lib/defaults';
 import { loadFromStorage, saveToStorage } from '@/lib/storage';
+import { loadWorkspaceSession, saveWorkspaceSession } from '@/lib/workspaceSession';
 
 // ---------------------------------------------------------------------------
 // Action types
@@ -21,10 +24,8 @@ type KosAction =
   | { type: 'HYDRATE'; payload: BoardingHouse }
   | { type: 'SET_MODE'; payload: AppMode }
   | { type: 'SET_ACTIVE_FLOOR'; payload: string }
-  | { type: 'SELECT_ROOM'; payload: string }
-  | { type: 'DESELECT_ROOM' }
-  | { type: 'SELECT_FACILITY'; payload: string }
-  | { type: 'DESELECT_FACILITY' }
+  | { type: 'SELECT_OBJECT'; payload: string }
+  | { type: 'DESELECT_OBJECT' }
   | { type: 'UPDATE_HOUSE_NAME'; payload: string }
   | { type: 'ADD_FLOOR'; payload: { id: string; name: string } }
   | { type: 'RENAME_FLOOR'; payload: { id: string; name: string } }
@@ -39,17 +40,19 @@ type KosAction =
   | { type: 'SET_DRAG_STATE'; payload: DragState | null };
 
 // ---------------------------------------------------------------------------
-// Initial state
+// State initializer — reads workspace session so mode + floor survive refresh
 // ---------------------------------------------------------------------------
 
-const initialState: AppState = {
-  boardingHouse: defaultBoardingHouse,
-  mode: 'view',
-  activeFloorId: defaultBoardingHouse.floors[0].id,
-  selectedRoomId: null,
-  selectedFacilityId: null,
-  dragState: null,
-};
+function initAppState(): AppState {
+  const session = loadWorkspaceSession();
+  return {
+    boardingHouse: defaultBoardingHouse,
+    mode: session?.mode ?? 'edit',
+    activeFloorId: session?.activeFloorId ?? defaultBoardingHouse.floors[0].id,
+    selectedObjectId: session?.selectedObjectId ?? null,
+    dragState: null,
+  };
+}
 
 // ---------------------------------------------------------------------------
 // Grid helpers
@@ -78,10 +81,13 @@ function reducer(state: AppState, action: KosAction): AppState {
   switch (action.type) {
     case 'HYDRATE': {
       const bh = action.payload;
+      // Preserve the session's activeFloorId if that floor still exists in the loaded data;
+      // fall back to the first floor only if the floor was deleted since last session.
+      const floorExists = bh.floors.some(f => f.id === state.activeFloorId);
       return {
         ...state,
         boardingHouse: bh,
-        activeFloorId: bh.floors[0]?.id ?? state.activeFloorId,
+        activeFloorId: floorExists ? state.activeFloorId : (bh.floors[0]?.id ?? state.activeFloorId),
       };
     }
 
@@ -92,21 +98,14 @@ function reducer(state: AppState, action: KosAction): AppState {
       return {
         ...state,
         activeFloorId: action.payload,
-        selectedRoomId: null,
-        selectedFacilityId: null,
+        selectedObjectId: null,
       };
 
-    case 'SELECT_ROOM':
-      return { ...state, selectedRoomId: action.payload, selectedFacilityId: null };
+    case 'SELECT_OBJECT':
+      return { ...state, selectedObjectId: action.payload };
 
-    case 'DESELECT_ROOM':
-      return { ...state, selectedRoomId: null };
-
-    case 'SELECT_FACILITY':
-      return { ...state, selectedFacilityId: action.payload, selectedRoomId: null };
-
-    case 'DESELECT_FACILITY':
-      return { ...state, selectedFacilityId: null };
+    case 'DESELECT_OBJECT':
+      return { ...state, selectedObjectId: null };
 
     case 'UPDATE_HOUSE_NAME':
       return {
@@ -118,8 +117,7 @@ function reducer(state: AppState, action: KosAction): AppState {
       const newFloor: Floor = {
         id: action.payload.id,
         name: action.payload.name,
-        rooms: [],
-        facilities: [],
+        objects: [],
       };
       return {
         ...state,
@@ -151,8 +149,7 @@ function reducer(state: AppState, action: KosAction): AppState {
         ...state,
         boardingHouse: { ...state.boardingHouse, floors: remaining },
         activeFloorId: nextActiveId,
-        selectedRoomId: null,
-        selectedFacilityId: null,
+        selectedObjectId: null,
       };
     }
 
@@ -164,7 +161,7 @@ function reducer(state: AppState, action: KosAction): AppState {
           floors: updateFloors(
             state.boardingHouse.floors,
             action.payload.floorId,
-            f => ({ ...f, rooms: [...f.rooms, action.payload.room] }),
+            f => ({ ...f, objects: [...f.objects, action.payload.room] }),
           ),
         },
       };
@@ -179,8 +176,8 @@ function reducer(state: AppState, action: KosAction): AppState {
             action.payload.floorId,
             f => ({
               ...f,
-              rooms: f.rooms.map(r =>
-                r.id === action.payload.room.id ? action.payload.room : r,
+              objects: f.objects.map((obj): MapObject =>
+                isRoom(obj) && obj.id === action.payload.room.id ? action.payload.room : obj,
               ),
             }),
           ),
@@ -197,19 +194,21 @@ function reducer(state: AppState, action: KosAction): AppState {
             action.payload.floorId,
             f => ({
               ...f,
-              rooms: f.rooms.filter(r => r.id !== action.payload.roomId),
+              objects: f.objects.filter(
+                obj => !(isRoom(obj) && obj.id === action.payload.roomId),
+              ),
             }),
           ),
         },
-        selectedRoomId:
-          state.selectedRoomId === action.payload.roomId ? null : state.selectedRoomId,
+        selectedObjectId:
+          state.selectedObjectId === action.payload.roomId ? null : state.selectedObjectId,
       };
 
     case 'MOVE_ROOM': {
       const { floorId, roomId, x, y } = action.payload;
       const floor = state.boardingHouse.floors.find(f => f.id === floorId);
       if (!floor) return state;
-      const room = floor.rooms.find(r => r.id === roomId);
+      const room = floor.objects.filter(isRoom).find(r => r.id === roomId);
       if (!room) return state;
 
       if (
@@ -218,14 +217,11 @@ function reducer(state: AppState, action: KosAction): AppState {
         y + room.height > state.boardingHouse.gridRows
       ) return state;
 
-      const hasRoomOverlap = floor.rooms.some(r => {
-        if (r.id === roomId) return false;
-        return cellsOverlap(x, y, room.width, room.height, r.x, r.y, r.width, r.height);
+      const hasOverlap = floor.objects.some(obj => {
+        if (isRoom(obj) && obj.id === roomId) return false;
+        return cellsOverlap(x, y, room.width, room.height, obj.x, obj.y, obj.width, obj.height);
       });
-      const hasFacilityOverlap = floor.facilities.some(fac =>
-        cellsOverlap(x, y, room.width, room.height, fac.x, fac.y, fac.width, fac.height),
-      );
-      if (hasRoomOverlap || hasFacilityOverlap) return state;
+      if (hasOverlap) return state;
 
       return {
         ...state,
@@ -233,7 +229,9 @@ function reducer(state: AppState, action: KosAction): AppState {
           ...state.boardingHouse,
           floors: updateFloors(state.boardingHouse.floors, floorId, f => ({
             ...f,
-            rooms: f.rooms.map(r => (r.id === roomId ? { ...r, x, y } : r)),
+            objects: f.objects.map((obj): MapObject =>
+              isRoom(obj) && obj.id === roomId ? { ...obj, x, y } : obj,
+            ),
           })),
         },
       };
@@ -247,7 +245,7 @@ function reducer(state: AppState, action: KosAction): AppState {
           floors: updateFloors(
             state.boardingHouse.floors,
             action.payload.floorId,
-            f => ({ ...f, facilities: [...f.facilities, action.payload.facility] }),
+            f => ({ ...f, objects: [...f.objects, action.payload.facility] }),
           ),
         },
       };
@@ -262,8 +260,10 @@ function reducer(state: AppState, action: KosAction): AppState {
             action.payload.floorId,
             f => ({
               ...f,
-              facilities: f.facilities.map(fac =>
-                fac.id === action.payload.facility.id ? action.payload.facility : fac,
+              objects: f.objects.map((obj): MapObject =>
+                isFacility(obj) && obj.id === action.payload.facility.id
+                  ? action.payload.facility
+                  : obj,
               ),
             }),
           ),
@@ -280,14 +280,14 @@ function reducer(state: AppState, action: KosAction): AppState {
             action.payload.floorId,
             f => ({
               ...f,
-              facilities: f.facilities.filter(fac => fac.id !== action.payload.facilityId),
+              objects: f.objects.filter(
+                obj => !(isFacility(obj) && obj.id === action.payload.facilityId),
+              ),
             }),
           ),
         },
-        selectedFacilityId:
-          state.selectedFacilityId === action.payload.facilityId
-            ? null
-            : state.selectedFacilityId,
+        selectedObjectId:
+          state.selectedObjectId === action.payload.facilityId ? null : state.selectedObjectId,
       };
 
     case 'SET_DRAG_STATE':
@@ -303,7 +303,8 @@ function reducer(state: AppState, action: KosAction): AppState {
 // ---------------------------------------------------------------------------
 
 export function useKosMap() {
-  const [state, dispatch] = useReducer(reducer, initialState);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [state, dispatch] = useReducer(reducer, undefined as any, initAppState);
 
   // isMounted gates the save effect so the first render with defaultBoardingHouse
   // never overwrites persisted data before the hydration effect fires.
@@ -324,6 +325,16 @@ export function useKosMap() {
     saveToStorage(state.boardingHouse);
   }, [state.boardingHouse]);
 
+  useEffect(() => {
+    saveWorkspaceSession({
+      version: 1,
+      activePropertyId: state.boardingHouse.id,
+      activeFloorId: state.activeFloorId,
+      selectedObjectId: state.selectedObjectId,
+      mode: state.mode,
+    });
+  }, [state.boardingHouse.id, state.activeFloorId, state.selectedObjectId, state.mode]);
+
   // ---------------------------------------------------------------------------
   // Convenience action dispatchers
   // ---------------------------------------------------------------------------
@@ -335,17 +346,11 @@ export function useKosMap() {
     setActiveFloor: (floorId: string) =>
       dispatch({ type: 'SET_ACTIVE_FLOOR', payload: floorId }),
 
-    selectRoom: (roomId: string) =>
-      dispatch({ type: 'SELECT_ROOM', payload: roomId }),
+    selectObject: (objectId: string) =>
+      dispatch({ type: 'SELECT_OBJECT', payload: objectId }),
 
-    deselectRoom: () =>
-      dispatch({ type: 'DESELECT_ROOM' }),
-
-    selectFacility: (facilityId: string) =>
-      dispatch({ type: 'SELECT_FACILITY', payload: facilityId }),
-
-    deselectFacility: () =>
-      dispatch({ type: 'DESELECT_FACILITY' }),
+    deselectObject: () =>
+      dispatch({ type: 'DESELECT_OBJECT' }),
 
     updateHouseName: (name: string) =>
       dispatch({ type: 'UPDATE_HOUSE_NAME', payload: name }),
@@ -399,10 +404,10 @@ export function useKosMap() {
     state.boardingHouse.floors[0];
 
   const selectedRoom =
-    activeFloor?.rooms.find(r => r.id === state.selectedRoomId) ?? null;
+    activeFloor?.objects.filter(isRoom).find(r => r.id === state.selectedObjectId) ?? null;
 
   const selectedFacility =
-    activeFloor?.facilities.find(f => f.id === state.selectedFacilityId) ?? null;
+    activeFloor?.objects.filter(isFacility).find(f => f.id === state.selectedObjectId) ?? null;
 
   return { state, actions, activeFloor, selectedRoom, selectedFacility };
 }

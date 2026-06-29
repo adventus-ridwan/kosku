@@ -84,6 +84,7 @@ export function AddFacilityOverlay({
     }
     const cfg = FACILITY_TYPE_CONFIG[facilityType];
     onConfirm({
+      kind: 'facility',
       name: trimmed,
       facilityType,
       x: cell.x,

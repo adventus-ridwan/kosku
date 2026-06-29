@@ -2,6 +2,7 @@
 
 import { useReducer, useEffect } from 'react';
 import type { BoardingHouse, Room } from '@/types';
+import { isRoom } from '@/types';
 import { defaultBoardingHouse } from '@/lib/defaults';
 import { loadFromStorage, saveToStorage } from '@/lib/storage';
 
@@ -36,7 +37,7 @@ function roomsReducer(state: RoomsState, action: RoomsAction): RoomsState {
 
 function flattenRooms(bh: BoardingHouse): FlatRoom[] {
   return bh.floors.flatMap(floor =>
-    floor.rooms.map(room => ({ room, floorId: floor.id, floorName: floor.name }))
+    floor.objects.filter(isRoom).map(room => ({ room, floorId: floor.id, floorName: floor.name }))
   );
 }
 
@@ -59,8 +60,8 @@ export function useRooms() {
       ...current,
       floors: current.floors.map(floor => ({
         ...floor,
-        rooms: floor.rooms.map(room =>
-          room.id === roomId ? { ...room, ...patch } : room
+        objects: floor.objects.map(obj =>
+          isRoom(obj) && obj.id === roomId ? { ...obj, ...patch } : obj
         ),
       })),
     };

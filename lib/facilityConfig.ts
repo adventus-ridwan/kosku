@@ -18,10 +18,11 @@ export const FACILITY_TYPE_CONFIG: Record<FacilityType, FacilityTypeConfig> = {
   storage:  { label: 'Gudang',      icon: '📦', bg: '#fefce8', text: '#a16207', border: '#fde047' },
   lobby:    { label: 'Lobby',       icon: '🏛️', bg: '#f5f3ff', text: '#6d28d9', border: '#c4b5fd' },
   garden:   { label: 'Taman',       icon: '🌿', bg: '#f7fee7', text: '#3f6212', border: '#bef264' },
+  gate:     { label: 'Gerbang',     icon: '🚪', bg: '#faf5ff', text: '#7c3aed', border: '#ddd6fe' },
   custom:   { label: 'Kustom',      icon: '⭐', bg: '#f9fafb', text: '#374151', border: '#d1d5db' },
 };
 
 export const FACILITY_TYPE_OPTIONS: FacilityType[] = [
   'stair', 'parking', 'kitchen', 'bathroom', 'laundry',
-  'mushola', 'storage', 'lobby', 'garden', 'custom',
+  'mushola', 'storage', 'lobby', 'garden', 'gate', 'custom',
 ];

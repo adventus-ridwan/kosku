@@ -2,6 +2,7 @@
 
 import { useKosMap } from '@/hooks/useKosMap';
 import { useUsageMode } from '@/context/UsageModeContext';
+import { isRoom } from '@/types';
 import { Toolbar } from './Toolbar';
 import { FloorTab } from './FloorTab';
 import { GridCanvas } from './GridCanvas';
@@ -40,22 +41,22 @@ export default function BoardingHouseMap() {
           mode={effectiveMode}
           onAddRoom={actions.addRoom}
           onAddFacility={actions.addFacility}
-          onRoomClick={actions.selectRoom}
-          onFacilityClick={actions.selectFacility}
+          onRoomClick={actions.selectObject}
+          onFacilityClick={actions.selectObject}
         />
       </div>
 
       {/* RoomDrawer and FacilityDrawer are always mounted; they slide in/out via translate.
-          They are mutually exclusive at the state level (selectedRoomId and selectedFacilityId
-          cannot both be non-null), so only one will animate in at a time. */}
+          They are mutually exclusive at the state level (selectedObjectId can only resolve to
+          one kind at a time), so only one will animate in at a time. */}
       <RoomDrawer
         room={selectedRoom}
         floorId={activeFloor.id}
-        floorRooms={activeFloor.rooms}
+        floorRooms={activeFloor.objects.filter(isRoom)}
         mode={effectiveMode}
         onSave={actions.updateRoom}
         onDelete={actions.deleteRoom}
-        onClose={actions.deselectRoom}
+        onClose={actions.deselectObject}
       />
       <FacilityDrawer
         facility={selectedFacility}
@@ -65,7 +66,7 @@ export default function BoardingHouseMap() {
         mode={effectiveMode}
         onSave={actions.updateFacility}
         onDelete={actions.deleteFacility}
-        onClose={actions.deselectFacility}
+        onClose={actions.deselectObject}
       />
     </div>
   );
