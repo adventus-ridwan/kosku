@@ -48,10 +48,10 @@ function getSuitableFor(typeName: string): string[] {
 function PageNav({ propertyName }: { propertyName: string }) {
   return (
     <nav
-      className="fixed top-0 inset-x-0 z-50 h-12 bg-slate-900/85 backdrop-blur-sm border-b border-white/[0.06]"
+      className="fixed top-0 inset-x-0 z-50 h-10 bg-slate-900/85 backdrop-blur-sm border-b border-white/[0.06]"
       aria-label="Navigasi halaman"
     >
-      <div className="max-w-5xl mx-auto px-6 h-full flex items-center justify-between gap-4">
+      <div className="max-w-[1440px] mx-auto px-6 h-full flex items-center justify-between gap-4">
         <span className="text-sm font-semibold text-white truncate">
           {propertyName || 'Kosku'}
         </span>
@@ -116,10 +116,10 @@ function HeroSection({
     // pt-20 clears the 48px fixed nav bar + provides breathing room
     <section className="bg-slate-900 text-white">
       <div className="max-w-[1440px] mx-auto px-6 pt-20 pb-24 sm:pt-24 sm:pb-28">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-8 items-center">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-4 items-center">
 
           {/* ── Content ─────────────────────────────────────────────────────── */}
-          <div className="lg:col-span-5">
+          <div className="lg:col-start-2 lg:col-span-5">
 
             {/* Eyebrow */}
             {type && (
@@ -194,7 +194,7 @@ function HeroSection({
           </div>
 
           {/* ── Hero illustration ───────────────────────────────────────────── */}
-          <div className="hidden lg:col-span-7 lg:flex items-center justify-center relative">
+          <div className="hidden lg:col-start-7 lg:col-span-6 lg:flex items-center justify-center relative">
             {/* Soft radial glow anchors the image to the dark background */}
             <div
               className="absolute pointer-events-none"

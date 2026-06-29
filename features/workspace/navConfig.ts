@@ -16,7 +16,7 @@ export const NAV_ITEMS: NavItem[] = [
   { label: 'Kontrak',     href: '/workspace/contracts',   icon: '📋',  hidden: true },
   // Management — owner only
   { label: 'Dashboard',   href: '/workspace/dashboard',   icon: '📊',  roles: ['owner'], hidden: true },
-  { label: 'Properti',    href: '/workspace/property',    icon: '🏠',  roles: ['owner'] },
   { label: 'Tipe Kamar',  href: '/workspace/room-types',  icon: '🏷️', roles: ['owner'] },
+  { label: 'Properti',    href: '/workspace/property',    icon: '🏠',  roles: ['owner'] },
   { label: 'Pengaturan',  href: '/workspace/settings',    icon: '⚙️',  roles: ['owner'], hidden: true },
 ];

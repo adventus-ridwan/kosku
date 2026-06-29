@@ -18,15 +18,15 @@ const ROLES: {
     value:    'owner',
     icon:     '👑',
     label:    'Owner',
-    tagline:  'Kelola seluruh properti',
-    features: ['Dashboard & analitik', 'Properti & galeri', 'Tipe kamar', 'Pengaturan sistem'],
+    tagline:  'Kontrol penuh terhadap seluruh properti',
+    features: ['Kelola denah interaktif', 'Kelola kamar', 'Kelola tipe kamar', 'Kelola informasi properti'],
   },
   {
     value:    'penjaga',
     icon:     '🛠️',
     label:    'Penjaga',
-    tagline:  'Kelola operasional harian',
-    features: ['Denah interaktif', 'Data penghuni', 'Kontrak & histori kamar'],
+    tagline:  'Operasional harian dengan akses terbatas',
+    features: ['Kelola denah & kamar', 'Lihat tipe kamar', 'Lihat informasi properti'],
   },
 ];
 
@@ -219,27 +219,19 @@ export default function LoginPage() {
           Masuk sebagai {roleConfig.label}
         </button>
 
-        {/* Back to public — unchanged */}
-        <div className="mt-7 pt-5 border-t border-gray-100 text-center">
-          <a
-            href="/kos"
-            className="text-sm text-gray-400 hover:text-gray-600 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-400 rounded"
-          >
-            ← Kembali ke Halaman Publik
-          </a>
-        </div>
       </div>
 
       {/* ── Right column — workspace preview (desktop only) ───────────────────── */}
       <div
-        className="hidden lg:flex flex-1 items-center justify-center relative overflow-hidden p-12"
-        style={{ background: 'linear-gradient(135deg, #f8fafc 0%, #eff6ff 50%, #f1f5f9 100%)' }}
-        aria-hidden="true"
+        className="hidden lg:flex flex-1 items-center justify-center relative overflow-hidden p-12 bg-slate-900"
       >
-        {/* Ambient depth blobs */}
-        <div className="absolute -top-32 -right-32 w-80 h-80 bg-blue-100/50 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 right-32 w-56 h-56 bg-slate-200/60 rounded-full blur-2xl pointer-events-none" />
-        <div className="absolute top-1/2 -left-12 w-40 h-40 bg-indigo-100/30 rounded-full blur-2xl pointer-events-none" />
+        {/* Back to public — top-left of preview panel */}
+        <a
+          href="/kos"
+          className="absolute top-7 left-8 text-sm text-slate-400 hover:text-slate-200 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500 rounded"
+        >
+          ← Kembali ke Halaman Publik
+        </a>
 
         <div className="relative w-full max-w-md flex flex-col gap-4">
 
@@ -327,7 +319,7 @@ export default function LoginPage() {
           </div>
 
           {/* Caption */}
-          <p className="text-center text-[11px] text-gray-400 leading-relaxed px-4">
+          <p className="text-center text-[11px] text-slate-500 leading-relaxed px-4">
             Denah interaktif — kelola kamar dan seluruh properti dalam satu tampilan
           </p>
         </div>
